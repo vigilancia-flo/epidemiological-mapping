@@ -6,6 +6,7 @@ import SidebarPrivate from "@/components/private/SidebarPrivate.jsx";
 import EndemiasFilter from "../../components/EndemiasFilter.jsx";
 import EndemiasFilterPrivate from "../../components/private/EndemiasFilterPrivate.jsx";
 import ButtonTheme from "../../components/ButtonTheme.jsx";
+import MapPeriodFilter from "@/components/MapPeriodFilter.jsx";
 import {
   Map,
   MapGeoJSON,
@@ -1942,6 +1943,10 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
   const navigate = useNavigate();
   const is3D = activeStyle === "openstreetmap3d";
 
+  const [filtroPeriodo, setFiltroPeriodo] = useState("todos");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
+
   useEffect(() => {
     if (mapRef.current) {
       mapRef.current.easeTo({ pitch: is3D ? 60 : 0, duration: 1000 });
@@ -1987,9 +1992,83 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
   // Lógica de mapeamento de UBS para Área no GeoJSON
   useEffect(() => {
     if (todosPacientes.length === 0) return;
+
+    // ==========================================
+    // 1. FILTRO DE PERÍODO (NOVO)
+    // ==========================================
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    let dataRefInicio = new Date();
+    let dataRefFim = hoje;
+
+    switch (filtroPeriodo) {
+      case "ultimoMes":
+        dataRefInicio.setMonth(hoje.getMonth() - 1);
+        break;
+      case "ultimos3Meses":
+        dataRefInicio.setMonth(hoje.getMonth() - 3);
+        break;
+      case "ultimos6Meses":
+        dataRefInicio.setMonth(hoje.getMonth() - 6);
+        break;
+      case "esteAno":
+        dataRefInicio = new Date(anoAtual, 0, 1);
+        break;
+      case "anoPassado":
+        dataRefInicio = new Date(anoAtual - 1, 0, 1);
+        dataRefFim = new Date(anoAtual - 1, 11, 31, 23, 59, 59);
+        break;
+      case "personalizado":
+        if (dataInicio && dataFim) {
+          dataRefInicio = new Date(dataInicio + "T00:00:00");
+          dataRefFim = new Date(dataFim + "T23:59:59");
+        }
+        break;
+    }
+
+    const pacientesFiltrados = todosPacientes.filter((p) => {
+      if (filtroPeriodo === "todos") return true;
+      if (filtroPeriodo === "personalizado" && (!dataInicio || !dataFim))
+        return true;
+
+      // Tenta por data de notificação completa
+      const dt = p.data_notificacao || p.dt_notific;
+      if (dt) {
+        const [ano, mes, dia] = dt.split("-");
+        const dataNotificacao = new Date(ano, mes - 1, dia);
+        return (
+          dataNotificacao >= dataRefInicio && dataNotificacao <= dataRefFim
+        );
+      }
+
+      // Fallback para agravos que só têm ano (AIDS costuma ter ano_notific)
+      const anoNotific = p.ano_notific || p["ANO NOTIFIC"] || p.ano;
+      if (anoNotific) {
+        const anoNum = Number(anoNotific);
+        if (filtroPeriodo === "anoPassado") return anoNum === anoAtual - 1;
+        if (filtroPeriodo === "esteAno") return anoNum === anoAtual;
+        if (
+          ["ultimoMes", "ultimos3Meses", "ultimos6Meses"].includes(
+            filtroPeriodo,
+          )
+        ) {
+          return anoNum === anoAtual;
+        }
+        if (filtroPeriodo === "personalizado" && dataInicio && dataFim) {
+          const anoInicio = new Date(dataInicio).getFullYear();
+          const anoFim = new Date(dataFim).getFullYear();
+          return anoNum >= anoInicio && anoNum <= anoFim;
+        }
+      }
+      return false;
+    });
+
+    // ==========================================
+    // 2. MAPEAMENTO UBS -> ÁREA GEOJSON
+    // ==========================================
     const contagemPorArea = {};
 
-    todosPacientes.forEach((paciente) => {
+    pacientesFiltrados.forEach((paciente) => {
       const nomeUbsOriginal = String(
         paciente.nm_ubs || paciente.un_saude || paciente.id_unidade || "",
       );
@@ -2000,7 +2079,7 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
 
       let nomeAreaMapa = null;
 
-      // Mapeamento por ID (similar ao MapViolencia)
+      // Mapeamento por ID
       const idUnidade = String(paciente.id_unidade || "").trim();
       const mapaPorId = {
         5943817: "AREA UBS ALFREDO DE CARVALHO",
@@ -2088,6 +2167,9 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
       }
     });
 
+    // ==========================================
+    // 3. INJEÇÃO DOS DADOS NO GEOJSON
+    // ==========================================
     const updatedFeatures = bairrosFlorianoGeoJSON.features.map((feature) => {
       const corOriginal =
         feature.properties.fill || feature.properties.color || "#808080";
@@ -2113,7 +2195,13 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
     });
 
     setGeoData({ ...bairrosFlorianoGeoJSON, features: updatedFeatures });
-  }, [todosPacientes, activeStyle]);
+  }, [
+    todosPacientes,
+    activeStyle,
+    filtroPeriodo, // 🆕 Adicione
+    dataInicio, // 🆕 Adicione
+    dataFim, // 🆕 Adicione
+  ]);
 
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
@@ -2313,6 +2401,16 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
                 )}
               </div>
             )}
+            <div className="absolute top-20 right-4 z-20 flex items-center gap-2">
+              <MapPeriodFilter
+                filtroTipo={filtroPeriodo}
+                setFiltroTipo={setFiltroPeriodo}
+                dataInicio={dataInicio}
+                setDataInicio={setDataInicio}
+                dataFim={dataFim}
+                setDataFim={setDataFim}
+              />
+            </div>
             <ButtonTheme
               activeStyle={activeStyle}
               setActiveStyle={setActiveStyle}
