@@ -22,11 +22,11 @@ const normalizar = (s) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-const contemPalavra = (nomeNormalizado, termo) => {
-  const t = normalizar(termo);
-  if (!t) return false;
-  const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|\\s)${escaped}(\\s|$)`).test(nomeNormalizado);
+const contemTermo = (nomeNormalizado, termo) => {
+  const palavrasTermo = normalizar(termo).split(/\s+/).filter(Boolean);
+  if (palavrasTermo.length === 0) return false;
+  const palavrasNome = new Set(nomeNormalizado.split(/\s+/).filter(Boolean));
+  return palavrasTermo.every((p) => palavrasNome.has(p));
 };
 
 const EXCLUSAO_GLOBAL = [
@@ -42,6 +42,7 @@ const FAIXAS_ETARIAS = {
   "Ao Nascer": {
     include: ["bcg", "hepatite b"],
   },
+
   "Menores de 1 ano de idade": {
     include: [
       "febre amarela",
@@ -51,25 +52,32 @@ const FAIXAS_ETARIAS = {
       "penta",
       "rotavirus",
     ],
+    // Bloqueia QUALQUER dose de reforço — base não puxa 1º/2º reforço
+    exclude: ["reforco"],
   },
+
   "1 ano de idade": {
     include: [
       "hepatite a",
-      "DTP (1º Reforço)",
-      "Tríplice Viral - 1º Dose",
-      "Tríplice Viral - 2º Dose",
-      "Pneumocócica Conjugada (1º Reforço)",
-      "Poliomielite (1º Reforço)",
-      "Varicela",
-      "Meningocócica Conjugada (1º Reforço)",
+      "dtp 1 reforco",
+      "triplice viral 1 dose",
+      "triplice viral 2 dose",
+      "pneumococica 1 reforco",
+      "poliomielite 1 reforco",
+      "meningococica 1 reforco",
+      "varicela", // <- base da varicela mora aqui (era órfã)
     ],
+    // A base "Varicela" casaria também com "Varicela - 2º dose" por prefixo;
+    // a 2ª dose pertence à faixa de 4 anos
+    exclude: ["varicela 2 dose"],
   },
+
   "4 anos de idade": {
     include: [
-      "DTP (2º Reforço)",
-      "Varicela - 2º dose",
-      "poliomielite",
-      "Febre Amarela (Reforço)",
+      "dtp 2 reforco",
+      "varicela 2 dose",
+      "poliomielite 2 reforco", // ok deixar — quando o seed tiver, aparece
+      "febre amarela reforco",
     ],
   },
 };
@@ -104,14 +112,15 @@ const isAdminUser = () => {
 function matchFaixa(imunobiologico, regra) {
   const nome = normalizar(imunobiologico);
 
-  if (EXCLUSAO_GLOBAL.some((ex) => contemPalavra(nome, ex))) {
-    const permitidos = regra.extras || [];
-    if (!permitidos.some((ex) => contemPalavra(nome, ex))) {
-      return false;
-    }
+  if (EXCLUSAO_GLOBAL.some((ex) => contemTermo(nome, ex))) {
+    return false;
   }
 
-  return regra.include.some((inc) => contemPalavra(nome, inc));
+  if (regra.exclude?.some((ex) => contemTermo(nome, ex))) {
+    return false;
+  }
+
+  return regra.include.some((inc) => contemTermo(nome, inc));
 }
 
 function ProgressBarMS({ percentual, meta }) {
