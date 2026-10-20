@@ -2041,10 +2041,10 @@ export default function MapDengue({ isPrivateView = false }) {
         dataRefInicio.setMonth(hoje.getMonth() - 6);
         break;
       case "esteAno":
-        dataRefInicio = new Date(anoAtual, 0, 1);
+        dataRefInicio = new Date(anoAtual, 0, 1, 0, 0, 0);
         break;
       case "anoPassado":
-        dataRefInicio = new Date(anoAtual - 1, 0, 1);
+        dataRefInicio = new Date(anoAtual - 1, 0, 1, 0, 0, 0);
         dataRefFim = new Date(anoAtual - 1, 11, 31, 23, 59, 59);
         break;
       case "personalizado":
@@ -2062,26 +2062,22 @@ export default function MapDengue({ isPrivateView = false }) {
 
       const dt = p.data_notificacao || p.dt_notific;
       if (dt) {
-        // Parser robusto: tenta criar a data direto
-        const dataNotificacao = new Date(dt);
+        // EVITA O ERRO DE FUSO: Pega YYYY-MM-DD e separa na mão
+        const [anoStr, mesStr, diaStr] = dt.split("T")[0].split("-");
+        const ano = parseInt(anoStr, 10);
+        const mes = parseInt(mesStr, 10) - 1;
+        const dia = parseInt(diaStr, 10);
 
-        if (!isNaN(dataNotificacao.getTime())) {
-          // Zera a hora para evitar problemas de fuso (comparar apenas o dia)
-          dataNotificacao.setHours(12, 0, 0, 0);
+        if (!isNaN(ano) && !isNaN(mes) && !isNaN(dia)) {
+          // Cria a data exatamente ao meio-dia local, ignorando UTC
+          const dataNotificacao = new Date(ano, mes, dia, 12, 0, 0);
           return (
             dataNotificacao >= dataRefInicio && dataNotificacao <= dataRefFim
           );
         }
-
-        // Fallback: se o new Date falhar (ex: YYYY-MM-DD puro), faz o split
-        const [ano, mes, dia] = dt.split("-");
-        if (ano && mes && dia) {
-          const fallbackDate = new Date(ano, mes - 1, dia);
-          return fallbackDate >= dataRefInicio && fallbackDate <= dataRefFim;
-        }
       }
 
-      // Fallback para ano (caso algum registro só tenha o ano)
+      // Fallback para ano (caso o backend mande só o ano)
       const anoNotific = p.ano_notific || p["ANO NOTIFIC"] || p.ano;
       if (anoNotific) {
         const anoNum = Number(anoNotific);
