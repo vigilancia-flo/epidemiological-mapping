@@ -2060,14 +2060,25 @@ export default function MapDengue({ isPrivateView = false }) {
       if (filtroPeriodo === "personalizado" && (!dataInicio || !dataFim))
         return true;
 
-      // Dengue tem data_notificacao completa
       const dt = p.data_notificacao || p.dt_notific;
       if (dt) {
+        // Parser robusto: tenta criar a data direto
+        const dataNotificacao = new Date(dt);
+
+        if (!isNaN(dataNotificacao.getTime())) {
+          // Zera a hora para evitar problemas de fuso (comparar apenas o dia)
+          dataNotificacao.setHours(12, 0, 0, 0);
+          return (
+            dataNotificacao >= dataRefInicio && dataNotificacao <= dataRefFim
+          );
+        }
+
+        // Fallback: se o new Date falhar (ex: YYYY-MM-DD puro), faz o split
         const [ano, mes, dia] = dt.split("-");
-        const dataNotificacao = new Date(ano, mes - 1, dia);
-        return (
-          dataNotificacao >= dataRefInicio && dataNotificacao <= dataRefFim
-        );
+        if (ano && mes && dia) {
+          const fallbackDate = new Date(ano, mes - 1, dia);
+          return fallbackDate >= dataRefInicio && fallbackDate <= dataRefFim;
+        }
       }
 
       // Fallback para ano (caso algum registro só tenha o ano)
@@ -2116,41 +2127,6 @@ export default function MapDengue({ isPrivateView = false }) {
     // ==========================================
     // 3. DICIONÁRIO BAIRRO -> ÁREA UBS
     // ==========================================
-    const bairroParaAreaUbs = {
-      CENTRO: "AREA UBS FLORIANO",
-      SAMBAIBA: "AREA UBS DIRCEU ARCOVERDE",
-      "SAMBAIBA VELHA": "AREA UBS DIRCEU ARCOVERDE",
-      MANGUINHA: "AREA UBS JOSE PARAGUASSU",
-      "ALTO DA CRUZ": "AREA UBS THEODORO FERREIRA SOBRAL",
-      "CAMPO VELHO": "AREA DA UBS PEDRO SIMPLICIO",
-      "REDE NOVA": "AREA UBS ALFREDO DE CARVALHO",
-      TABOCA: "AREA DA UBS LUIZ TAVARES",
-      "IRAPUA I": "AREA UBS CAMILO FILHO",
-      "IRAPUA II": "AREA UBS CAMILO FILHO",
-      "NOSSA SENHORA DA GUIA": "AREA UBS NOSSA SENHORA DA GUIA",
-      TIBERAO: "AREA UBS RAIMUNDO FILHO",
-      "BOM LUGAR": "AREA UBS PAULO KALUME",
-      "BOSQUE SANTA TEREZINHA": "AREA UBS JOAO ELIAS OKA",
-      "CAIXA D AGUA": "AREA UBS THEODORO FERREIRA SOBRAL",
-      CAJUEIRO: "AREA UBS JOAO ELIAS OKA",
-      "ALTO DA GUIA": "AREA UBS NOSSA SENHORA DA GUIA",
-      CURADOR: "AREA UBS THEODORO FERREIRA SOBRAL",
-      IBIAPABA: "AREA UBS VIANA DE CARVALHO",
-      "PAU FERRADO": "AREA UBS PAULO MARTINS",
-      "SAO BORJA": "AREA DA UBS PEDRO SIMPLICIO",
-      "PLANALTO SAMBAIBA": "AREA UBS DIRCEU ARCOVERDE",
-      CATUMBI: "AREA UBS RAIMUNDO FILHO",
-      "SAO CRISTOVAO": "AREA UBS FLORIANO",
-      TAMBORIL: "AREA UBS ALFREDO DE CARVALHO",
-      "CONJUNTO  PARAISO": "AREA DA UBS JASMINA BUCAR",
-      CANCELA: "AREA UBS PAULO KALUME",
-      CANOAS: "AREA UBS JOSE PARAGUASSU",
-      "PLANALTO BELA VISTA": "AREA DA UBS PEDRO SIMPLICIO",
-      MELADAO: "AREA DA UBS PEDRO SIMPLICIO",
-      VIAZUL: "AREA UBS RAIMUNDO FILHO",
-      "PEDRO SIMPLICIO": "AREA DA UBS PEDRO SIMPLICIO",
-    };
-
     const cnesParaAreaMapa = {
       2778432: "AREA UBS FLORIANO",
       2778041: "AREA UBS DIRCEU ARCOVERDE",
@@ -2166,7 +2142,7 @@ export default function MapDengue({ isPrivateView = false }) {
       2778335: "AREA UBS VIANA DE CARVALHO",
       2609630: "AREA UBS PAULO MARTINS",
       2995395: "AREA DA UBS JASMINA BUCAR",
-      2778157: "AREA UBS HELVIDIO DE HOLANDA BARROS", // <-- O Helvidio!
+      2778157: "AREA UBS HELVIDIO DE HOLANDA BARROS",
       2364662: "AREA UBS MORRINHOS",
       2778289: "AREA UBS PROTASIO DE MORAES",
       2778092: "AREA UBS SANTA CRUZ",
@@ -2181,7 +2157,12 @@ export default function MapDengue({ isPrivateView = false }) {
     const contagemPorArea = {};
 
     pacientesFiltrados.forEach((paciente) => {
-      let nomeAreaMapa = cnesParaAreaMapa[paciente.id_unidade];
+      // Converte para string, remove .0 (se vier do Excel) e tira espaços em branco
+      const idLimpo = String(paciente.id_unidade || "")
+        .replace(".0", "")
+        .trim();
+
+      let nomeAreaMapa = cnesParaAreaMapa[idLimpo];
 
       if (!nomeAreaMapa && paciente.endereco) {
         const bairroNormalizado = extrairBairro(paciente.endereco);
@@ -2195,13 +2176,14 @@ export default function MapDengue({ isPrivateView = false }) {
           .replace(/[\u0300-\u036f]/g, "");
         contagemPorArea[nomeAreaGeoJSON] =
           (contagemPorArea[nomeAreaGeoJSON] || 0) + 1;
+      } else {
+        // console.log("Caso não mapeado:", paciente.numero_notificacao, "ID Unidade:", idLimpo, "Endereço:", paciente.endereco);
       }
     });
 
     // ==========================================
     // 5. INJEÇÃO DOS DADOS NO MAPA
     // ==========================================
-    // 5. INJEÇÃO DOS DADOS NO MAPA
     const updatedFeatures = bairrosFlorianoGeoJSON.features.map((feature) => {
       const corOriginal =
         feature.properties.fill || feature.properties.color || "#808080";
