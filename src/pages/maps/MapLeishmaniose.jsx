@@ -49,6 +49,8 @@ import RosaRodriguesCamelo from "../../assets/ubs/RosaRodriguesCamelo.jpeg";
 import ProtasioMoraes from "../../assets/ubs/ProtasioMoraes.png";
 import UbsL3 from "../../assets/ubs/UbsL3.jpeg";
 import LeonardoDudima from "../../assets/ubs/LeonardoDudima.jpeg";
+import HelvidioHolanda from "../../assets/ubs/HelvidioHolanda.jpg";
+import PauloMartins from "../../assets/ubs/pauloMartins.jpg";
 
 const MAP_STYLES = {
   light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
@@ -1707,7 +1709,7 @@ const marcadores = [
     reviews: 2,
     hours: "07:30h - 17:30h",
     color: "#D7A067",
-    image: defaultImage,
+    image: HelvidioHolanda,
     lng: -43.02848164082034,
     lat: -6.786913028924275,
   },
@@ -1720,7 +1722,7 @@ const marcadores = [
     reviews: 1,
     hours: "07:30h - 17:30h",
     color: "#D7DCA4",
-    image: defaultImage,
+    image: PauloMartins,
     lng: -43.018652030194644,
     lat: -6.78669340844439,
   },
