@@ -152,6 +152,33 @@ const BAIRRO_PARA_UBS = {
   "PEDRO SIMPLICIO": "UBS Pedro Simplício",
 };
 
+const CNES_PARA_UBS = {
+  2778432: "UBS Floriano (Centro)",
+  2778041: "UBS Dirceu Arcoverde",
+  5459583: "UBS José Paraguassú",
+  2778254: "UBS Pedro Simplício",
+  5943817: "UBS Alfredo de Carvalho",
+  2364654: "UBS Luiz Tavares",
+  2777916: "UBS Camilo Filho",
+  2364670: "UBS N. Sra. da Guia",
+  2364697: "UBS Raimundo Filho",
+  2778246: "UBS Paulo Kalume",
+  2364689: "UBS João Elias Oka",
+  2778335: "UBS Viana de Carvalho",
+  2609630: "UBS Paulo Martins",
+  2995395: "UBS Jasmina Bucar",
+  2778157: "UBS Helvidio H. Barros",
+  2364662: "UBS Morrinhos",
+  2778289: "UBS Protasio de Moraes Barbosa",
+  2778092: "UBS Santa Cruz",
+  2364646: "UBS VEREDA GRANDE II",
+  2364611: "UBS do PAM",
+  2777843: "UBS Amolar",
+  2364638: "UBS L3",
+  2778181: "UBS Leonardo Dudima",
+  2669129: "UBS Margarida Alves Almeida",
+};
+
 const PERIODO_OPTIONS = [
   { value: "todos", label: "Todo o Período" },
   { value: "ultimoMes", label: "Último Mês" },
@@ -526,7 +553,8 @@ export default function Dashboard({ isPrivateView = false }) {
       let ubsTag = "";
       if (endemiaSelecionada.id === "dengue") {
         ubsTag =
-          BAIRRO_PARA_UBS[obterBairroNormalizado(paciente.endereco)] ||
+          CNES_PARA_UBS[paciente.id_unidade] ||
+          paciente.id_unidade ||
           "Não Mapeada";
       } else {
         ubsTag = paciente.nm_ubs || paciente.un_saude || "Não informada";
@@ -549,8 +577,10 @@ export default function Dashboard({ isPrivateView = false }) {
   const contagemUbs = pacientesFiltrados.reduce((acc, paciente) => {
     let ubs = "Não Informada";
     if (endemiaSelecionada.id === "dengue") {
-      const bairroNormalizado = obterBairroNormalizado(paciente.endereco);
-      ubs = BAIRRO_PARA_UBS[bairroNormalizado] || "Outras Regiões";
+      ubs =
+        CNES_PARA_UBS[paciente.id_unidade] ||
+        paciente.id_unidade ||
+        "Outras Regiões";
     } else {
       const nomeAPI = paciente.nm_ubs || paciente.un_saude;
       if (nomeAPI) ubs = nomeAPI;
