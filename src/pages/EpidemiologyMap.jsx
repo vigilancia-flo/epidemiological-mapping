@@ -52,8 +52,8 @@ import RosaRodriguesCamelo from "../assets/ubs/RosaRodriguesCamelo.jpeg";
 import ProtasioMoraes from "../assets/ubs/ProtasioMoraes.png";
 import UbsL3 from "../assets/ubs/UbsL3.jpeg";
 import LeonardoDudima from "../assets/ubs/LeonardoDudima.jpeg";
-import HelvidioHolanda from "../assets/ubs/helvidioHolanda.jpg";
-import PauloMartins from "../assets/ubs/pauloMartins.jpg";
+import HelvidioHolanda from "../assets/ubs/HelvidioHolanda.jpg";
+import PauloMartins from "../assets/ubs/PauloMartins.jpg";
 
 const MAP_STYLES = {
   light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
