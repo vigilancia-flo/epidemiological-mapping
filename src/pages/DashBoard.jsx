@@ -538,7 +538,7 @@ export default function Dashboard({ isPrivateView = false }) {
       else if (classFinal === "8") statusCor = "bg-slate-400";
       return {
         name: `Caso #${paciente.numero_notificacao || "S/N"}`,
-        condition: `Sintoma: ${paciente.data_pri_sintoma || "N/I"} | Sexo: ${paciente.cs_sexo || "N/I"}`,
+        condition: `Sintoma: ${paciente.data_pri_sintoma_display ?? "N/I"} | Sexo: ${paciente.cs_sexo || "N/I"}`,
         ubs: `UBS: ${ubsTag} | ${bairro}`,
         corClassificacao: statusCor,
         dadosOriginais: paciente,

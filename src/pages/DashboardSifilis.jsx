@@ -56,8 +56,8 @@ export default function DashboardSifilis({ pacientes, distribuicaoUbs }) {
   const dadosEvolucao = useMemo(() => {
     const contagemMes = {};
     pacientes.forEach((p) => {
-      if (!p.dt_notific) return;
-      const data = new Date(p.dt_notific);
+      if (!p.data_notificacao) return;
+      const data = new Date(p.data_notificacao);
       if (!isNaN(data)) {
         const mesAno = `${data.toLocaleString("pt-BR", { month: "short" })}/${data.getFullYear()}`;
         contagemMes[mesAno] = (contagemMes[mesAno] || 0) + 1;
@@ -71,7 +71,7 @@ export default function DashboardSifilis({ pacientes, distribuicaoUbs }) {
   }, [pacientes]);
 
   const casosRecentesFormatados = [...pacientes]
-    .sort((a, b) => new Date(b.dt_notific) - new Date(a.dt_notific))
+    .sort((a, b) => new Date(b.data_notificacao) - new Date(a.data_notificacao))
     .slice(0, 5)
     .map((paciente) => {
       const isCongenita = paciente.id_agravo?.toUpperCase().includes("A50");
@@ -79,7 +79,7 @@ export default function DashboardSifilis({ pacientes, distribuicaoUbs }) {
 
       return {
         name: `Notificação #${paciente.nu_notific || "S/N"}`,
-        condition: `CID: ${paciente.id_agravo || "N/I"} | Data: ${paciente.dt_notific || "-"}`,
+        condition: `CID: ${paciente.id_agravo || "N/I"} | Data: ${paciente.data_notificacao_display ?? "-"}`,
         ubs: `UBS: ${paciente.nm_ubs || paciente.un_saude || "Não informada"}`,
         corClassificacao: statusCor,
         dadosOriginais: paciente,
