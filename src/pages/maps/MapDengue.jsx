@@ -2151,26 +2151,57 @@ export default function MapDengue({ isPrivateView = false }) {
       "PEDRO SIMPLICIO": "AREA DA UBS PEDRO SIMPLICIO",
     };
 
+    const cnesParaAreaMapa = {
+      2778432: "AREA UBS FLORIANO",
+      2778041: "AREA UBS DIRCEU ARCOVERDE",
+      5459583: "AREA UBS JOSE PARAGUASSU",
+      2778254: "AREA DA UBS PEDRO SIMPLICIO",
+      5943817: "AREA UBS ALFREDO DE CARVALHO",
+      2364654: "AREA DA UBS LUIZ TAVARES",
+      2777916: "AREA UBS CAMILO FILHO",
+      2364670: "AREA UBS NOSSA SENHORA DA GUIA",
+      2364697: "AREA UBS RAIMUNDO FILHO",
+      2778246: "AREA UBS PAULO KALUME",
+      2364689: "AREA UBS JOAO ELIAS OKA",
+      2778335: "AREA UBS VIANA DE CARVALHO",
+      2609630: "AREA UBS PAULO MARTINS",
+      2995395: "AREA DA UBS JASMINA BUCAR",
+      2778157: "AREA UBS HELVIDIO DE HOLANDA BARROS", // <-- O Helvidio!
+      2364662: "AREA UBS MORRINHOS",
+      2778289: "AREA UBS PROTASIO DE MORAES",
+      2778092: "AREA UBS SANTA CRUZ",
+      2364646: "AREA UBS VEREDA GRANDE II",
+      2364611: "AREA UBS PAM",
+      2777843: "AREA UBS AMOLAR",
+      2364638: "AREA UBS L3",
+      2778181: "AREA UBS LEONARDO DUDIMA",
+      2669129: "AREA UBS MARGARIDA ALVES",
+    };
+
     const contagemPorArea = {};
 
-    // ==========================================
-    // 4. CONTAGEM
-    // ==========================================
     pacientesFiltrados.forEach((paciente) => {
-      if (paciente.endereco) {
-        const bairroNormalizado = extrairBairro(paciente.endereco);
-        const nomeAreaMapa = bairroParaAreaUbs[bairroNormalizado];
+      let nomeAreaMapa = cnesParaAreaMapa[paciente.id_unidade];
 
-        if (nomeAreaMapa) {
-          contagemPorArea[nomeAreaMapa] =
-            (contagemPorArea[nomeAreaMapa] || 0) + 1;
-        }
+      if (!nomeAreaMapa && paciente.endereco) {
+        const bairroNormalizado = extrairBairro(paciente.endereco);
+        nomeAreaMapa = bairroParaAreaUbs[bairroNormalizado];
+      }
+
+      if (nomeAreaMapa) {
+        const nomeAreaGeoJSON = nomeAreaMapa
+          .toUpperCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+        contagemPorArea[nomeAreaGeoJSON] =
+          (contagemPorArea[nomeAreaGeoJSON] || 0) + 1;
       }
     });
 
     // ==========================================
     // 5. INJEÇÃO DOS DADOS NO MAPA
     // ==========================================
+    // 5. INJEÇÃO DOS DADOS NO MAPA
     const updatedFeatures = bairrosFlorianoGeoJSON.features.map((feature) => {
       const corOriginal =
         feature.properties.fill || feature.properties.color || "#808080";
@@ -2186,13 +2217,15 @@ export default function MapDengue({ isPrivateView = false }) {
 
         numeroCasos = contagemPorArea[nomeAreaGeoJSON] || 0;
       }
-      const corFinal = numeroCasos === 0 ? "#475569" : corOriginal;
+
+      // Define cinza se for 0, senão usa a cor original
+      const corFinal = numeroCasos === 0 ? "#cbd5e1" : corOriginal;
 
       return {
         ...feature,
         properties: {
           ...feature.properties,
-          color: corOriginal,
+          color: corFinal, // <-- AQUI ESTAVA O BUG! Antes era corOriginal
           casos: numeroCasos,
         },
       };
