@@ -2127,6 +2127,41 @@ export default function MapDengue({ isPrivateView = false }) {
     // ==========================================
     // 3. DICIONÁRIO BAIRRO -> ÁREA UBS
     // ==========================================
+    const bairroParaAreaUbs = {
+      CENTRO: "AREA UBS FLORIANO",
+      SAMBAIBA: "AREA UBS DIRCEU ARCOVERDE",
+      "SAMBAIBA VELHA": "AREA UBS DIRCEU ARCOVERDE",
+      MANGUINHA: "AREA UBS JOSE PARAGUASSU",
+      "ALTO DA CRUZ": "AREA UBS THEODORO FERREIRA SOBRAL",
+      "CAMPO VELHO": "AREA DA UBS PEDRO SIMPLICIO",
+      "REDE NOVA": "AREA UBS ALFREDO DE CARVALHO",
+      TABOCA: "AREA DA UBS LUIZ TAVARES",
+      "IRAPUA I": "AREA UBS CAMILO FILHO",
+      "IRAPUA II": "AREA UBS CAMILO FILHO",
+      "NOSSA SENHORA DA GUIA": "AREA UBS NOSSA SENHORA DA GUIA",
+      TIBERAO: "AREA UBS RAIMUNDO FILHO",
+      "BOM LUGAR": "AREA UBS PAULO KALUME",
+      "BOSQUE SANTA TEREZINHA": "AREA UBS JOAO ELIAS OKA",
+      "CAIXA D AGUA": "AREA UBS THEODORO FERREIRA SOBRAL",
+      CAJUEIRO: "AREA UBS JOAO ELIAS OKA",
+      "ALTO DA GUIA": "AREA UBS NOSSA SENHORA DA GUIA",
+      CURADOR: "AREA UBS THEODORO FERREIRA SOBRAL",
+      IBIAPABA: "AREA UBS VIANA DE CARVALHO",
+      "PAU FERRADO": "AREA UBS PAULO MARTINS",
+      "SAO BORJA": "AREA DA UBS PEDRO SIMPLICIO",
+      "PLANALTO SAMBAIBA": "AREA UBS DIRCEU ARCOVERDE",
+      CATUMBI: "AREA UBS RAIMUNDO FILHO",
+      "SAO CRISTOVAO": "AREA UBS FLORIANO",
+      TAMBORIL: "AREA UBS ALFREDO DE CARVALHO",
+      "CONJUNTO  PARAISO": "AREA DA UBS JASMINA BUCAR",
+      CANCELA: "AREA UBS PAULO KALUME",
+      CANOAS: "AREA UBS JOSE PARAGUASSU",
+      "PLANALTO BELA VISTA": "AREA DA UBS PEDRO SIMPLICIO",
+      MELADAO: "AREA DA UBS PEDRO SIMPLICIO",
+      VIAZUL: "AREA UBS RAIMUNDO FILHO",
+      "PEDRO SIMPLICIO": "AREA DA UBS PEDRO SIMPLICIO",
+    };
+
     const cnesParaAreaMapa = {
       2778432: "AREA UBS FLORIANO",
       2778041: "AREA UBS DIRCEU ARCOVERDE",
@@ -2154,14 +2189,18 @@ export default function MapDengue({ isPrivateView = false }) {
       2669129: "AREA UBS MARGARIDA ALVES",
     };
 
+    // ==========================================
+    // 4. CONTAGEM
+    // ==========================================
     const contagemPorArea = {};
 
     pacientesFiltrados.forEach((paciente) => {
-      // Converte para string, remove .0 (se vier do Excel) e tira espaços em branco
+      // Converte para string, remove .0 e tira espaços
       const idLimpo = String(paciente.id_unidade || "")
         .replace(".0", "")
         .trim();
 
+      // Tenta primeiro pelo CNES, depois pelo Bairro
       let nomeAreaMapa = cnesParaAreaMapa[idLimpo];
 
       if (!nomeAreaMapa && paciente.endereco) {
@@ -2176,8 +2215,6 @@ export default function MapDengue({ isPrivateView = false }) {
           .replace(/[\u0300-\u036f]/g, "");
         contagemPorArea[nomeAreaGeoJSON] =
           (contagemPorArea[nomeAreaGeoJSON] || 0) + 1;
-      } else {
-        // console.log("Caso não mapeado:", paciente.numero_notificacao, "ID Unidade:", idLimpo, "Endereço:", paciente.endereco);
       }
     });
 
