@@ -177,6 +177,7 @@ const CNES_PARA_UBS = {
   2364638: "UBS L3",
   2778181: "UBS Leonardo Dudima",
   2669129: "UBS Margarida Alves Almeida",
+  2778319: "UBS Theodoro Ferreira Sobral",
 };
 
 const PERIODO_OPTIONS = [
