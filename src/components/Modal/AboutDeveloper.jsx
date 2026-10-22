@@ -22,7 +22,7 @@ export default function AboutDeveloper({ isOpen, onClose }) {
       aria-labelledby="about-dev-title"
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+        className="relative w-full max-w-2xl max-h-[100vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -115,16 +115,24 @@ export default function AboutDeveloper({ isOpen, onClose }) {
                   Desenvolvimento de Software
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {["Python", "Django Rest Framework", "Ionic", "ReactJS"].map(
-                    (tech) => (
-                      <span
-                        key={tech}
-                        className="rounded-lg border border-[#4180ab]/20 bg-[#4180ab]/10 px-3 py-1.5 text-xs font-bold text-[#054060]"
-                      >
-                        {tech}
-                      </span>
-                    ),
-                  )}
+                  {[
+                    "Python",
+                    "Django Rest Framework",
+                    "Ionic",
+                    "ReactJS",
+                    "TypeScript",
+                    "NodeJs",
+                    "SBC",
+                    "Linux",
+                    "Visão Computacional",
+                  ].map((tech) => (
+                    <span
+                      key={tech}
+                      className="rounded-lg border border-[#4180ab]/20 bg-[#4180ab]/10 px-3 py-1.5 text-xs font-bold text-[#054060]"
+                    >
+                      {tech}
+                    </span>
+                  ))}
                 </div>
               </div>
 

@@ -2314,13 +2314,20 @@ export default function MapAids({ isPrivateView = false }) {
                       latitude={place.lat}
                     >
                       <MarkerContent>
-                        <div
-                          className="size-5 cursor-pointer rounded-full border-2 border-white shadow-lg transition-transform h-6 w-6 hover:scale-110"
-                          style={{ backgroundColor: place.color }}
-                        >
-                          <p className="text-center text-white font-bold text-xs mt-0.5">
-                            U
-                          </p>
+                        <div className="relative group cursor-pointer flex flex-col items-center justify-center">
+                          <div
+                            className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-40 group-hover:scale-200 transition-all duration-500 ease-out pointer-events-none"
+                            style={{ backgroundColor: place.color }}
+                          />
+
+                          <div
+                            className="size-7 rounded-full border-[3px] border-white shadow-md flex items-center justify-center transition-all duration-300 group-hover:scale-125 group-hover:shadow-xl z-10"
+                            style={{ backgroundColor: place.color }}
+                          >
+                            <p className="text-white font-bold text-[10px]">
+                              U
+                            </p>
+                          </div>
                         </div>
                         {zoomAtual >= 15 && (
                           <MarkerLabel
@@ -2383,7 +2390,7 @@ export default function MapAids({ isPrivateView = false }) {
 
                 {hoverInfo && (
                   <div
-                    className="absolute z-50 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-xl border border-slate-200 pointer-events-none transition-opacity duration-150"
+                    className="absolute z-50 bg-white backdrop-blur-md text-white px-4 py-2.5 rounded-xl shadow-2xl pointer-events-none border border-slate-700/30 flex flex-col gap-1 min-w-35"
                     style={{
                       left: `${hoverInfo.x + 15}px`,
                       top: `${hoverInfo.y + 15}px`,

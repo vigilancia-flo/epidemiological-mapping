@@ -891,13 +891,13 @@ export default function SystemInformation() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto md:ml-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto md:ml-auto">
                 {podeEditar && (
                   <>
                     <button
                       onClick={handleSyncGoverno}
                       disabled={isSyncing}
-                      className="col-span-2 md:col-span-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isSyncing ? (
                         <RefreshCw className="size-4 animate-spin" />
@@ -909,7 +909,7 @@ export default function SystemInformation() {
 
                     <button
                       onClick={() => setIsImportModalOpen(true)}
-                      className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
+                      className="w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
                     >
                       <Upload className="size-4 shrink-0" />
                       Importar
@@ -918,7 +918,7 @@ export default function SystemInformation() {
                     {/* ===== BOTÃO EXPORTAR (dropdown) ===== */}
                     {podeExportar && (
                       <div
-                        className="relative col-span-2 md:col-span-1"
+                        className="relative w-full md:w-auto"
                         ref={exportDropdownRef}
                       >
                         <button
@@ -946,6 +946,7 @@ export default function SystemInformation() {
 
                         {isExportDropdownOpen && (
                           <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                            {/* ... (conteúdo do dropdown mantido igual) ... */}
                             <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
                               <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                 Formato de exportação
@@ -1006,7 +1007,7 @@ export default function SystemInformation() {
 
                     <button
                       onClick={() => handleOpenModal()}
-                      className="flex items-center justify-center gap-2 bg-[#4180ab] hover:bg-[#32678c] text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
+                      className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#4180ab] hover:bg-[#32678c] text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
                     >
                       <Plus className="size-4 shrink-0" />
                       Adicionar

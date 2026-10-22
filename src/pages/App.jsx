@@ -20,7 +20,7 @@ import SystemInformation from "./SystemInformation.jsx";
 import NotFound from "./NotFound.jsx";
 import ProtectedRoute from "@/utils/ProtectedRoute.jsx";
 import CoberturaVacinal from "./CoberturaVacinal.jsx";
-import AboutDeveloper from "./AboutDeveloper.jsx";
+import AboutDeveloper from "../components/Modal/AboutDeveloper.jsx";
 
 function App() {
   return (

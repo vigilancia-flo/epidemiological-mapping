@@ -21,13 +21,14 @@ import EpiDataLogo from "../assets/EPI-DATA.png";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import PoliLegal from "@/components/Modal/PoliLegal.jsx";
 import TermsModal from "@/components/Modal/TermsModal.jsx";
-import AboutDeveloper from "./AboutDeveloper";
+import AboutDeveloper from "../components/Modal/AboutDeveloper";
 
 const FEATURES = [
   {
     icon: MapIcon,
     title: "Mapa de Calor",
-    description: "Densidade de casos segmentada por quadrantes urbanos.",
+    description:
+      "Densidade de casos segmentada por quadrantes urbanos e rurais.",
     accent: "from-sky-500/15 to-sky-500/5",
     iconBg: "bg-sky-500/15",
     iconColor: "text-sky-700",

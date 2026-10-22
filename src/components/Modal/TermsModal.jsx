@@ -24,9 +24,9 @@ export default function TermsModal({ isOpen, onClose }) {
         {/* Conteúdo */}
         <div className="p-6 overflow-y-auto flex-1 text-sm text-slate-600 space-y-4 custom-scrollbar">
           <p>
-            Bem-vindo ao sistema de Mapeamento Epidemiológico. Ao aceder e
+            Bem-vindo ao <span className="font-bold">SIGEP</span>. Ao aceitar e
             utilizar a nossa plataforma, concorda com os seguintes termos e
-            condições.
+            condições:
           </p>
 
           <h3 className="font-bold text-slate-800 text-base">
