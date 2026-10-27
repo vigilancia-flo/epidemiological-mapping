@@ -20,38 +20,49 @@ import {
 const COLORS = ["#8b5cf6", "#d946ef", "#f43f5e", "#0ea5e9", "#10b981"];
 
 export default function DashboardIntoxicacao({ pacientes }) {
+  // 1. Agrupar os dados por ano e somar os casos
+  const dadosAgrupados = useMemo(() => {
+    const agrupado = {};
+
+    pacientes.forEach((p) => {
+      const ano = p.ano_notific ? String(p.ano_notific) : "N/I";
+      const qtd = Number(p.nu_notific || 0);
+
+      if (!agrupado[ano]) {
+        agrupado[ano] = 0;
+      }
+      agrupado[ano] += qtd;
+    });
+
+    return Object.entries(agrupado)
+      .map(([ano, casos]) => ({ ano, casos }))
+      .sort((a, b) => Number(a.ano) - Number(b.ano)); // Ordem crescente para o gráfico
+  }, [pacientes]);
+
+  // 2. Cálculos baseados nos dados agrupados
   const totalCasos = pacientes.reduce(
-    (sum, p) => sum + Number(p.nu_notific || 1),
+    (sum, p) => sum + Number(p.nu_notific || 0),
     0,
   );
 
-  const anosAtivos = pacientes.length;
+  const anosAtivos = dadosAgrupados.length;
 
   const anoMaisAfetado = useMemo(() => {
-    if (!pacientes.length) return { ano: "Nenhum", casos: 0 };
-    const maior = [...pacientes].sort(
-      (a, b) => Number(b.nu_notific || 0) - Number(a.nu_notific || 0),
-    )[0];
+    if (!dadosAgrupados.length) return { ano: "Nenhum", casos: 0 };
+    const maior = [...dadosAgrupados].sort((a, b) => b.casos - a.casos)[0];
     return {
-      ano: maior.ano_notific || "N/I",
-      casos: maior.nu_notific || 1,
+      ano: maior.ano,
+      casos: maior.casos,
     };
-  }, [pacientes]);
+  }, [dadosAgrupados]);
 
   const mediaPorAno = anosAtivos > 0 ? (totalCasos / anosAtivos).toFixed(1) : 0;
 
-  const dadosEvolucao = useMemo(() => {
-    return [...pacientes]
-      .sort((a, b) => Number(a.ano_notific || 0) - Number(b.ano_notific || 0))
-      .map((p) => ({
-        ano: String(p.ano_notific || "N/I"),
-        casos: Number(p.nu_notific || 0),
-      }));
-  }, [pacientes]);
+  // 3. Dados para o gráfico (já ordenados de forma crescente)
+  const dadosEvolucao = dadosAgrupados;
 
-  const listaAnos = [...pacientes].sort(
-    (a, b) => Number(b.ano_notific || 0) - Number(a.ano_notific || 0),
-  );
+  // 4. Dados para a tabela (ordem decrescente - do mais recente pro mais antigo)
+  const listaAnos = [...dadosAgrupados].reverse();
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-500">
@@ -170,7 +181,7 @@ export default function DashboardIntoxicacao({ pacientes }) {
                     <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold bg-purple-100 text-purple-700">
                       A
                     </div>
-                    Consolidado {anoItem.ano_notific}
+                    Consolidado {anoItem.ano}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className="px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block bg-slate-50 text-slate-600 border border-slate-200">
@@ -179,7 +190,7 @@ export default function DashboardIntoxicacao({ pacientes }) {
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <span className="font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded-full">
-                      {anoItem.nu_notific || 0}
+                      {anoItem.casos}
                     </span>
                   </td>
                 </tr>
