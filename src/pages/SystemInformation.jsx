@@ -894,18 +894,20 @@ export default function SystemInformation() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto md:ml-auto">
                 {podeEditar && (
                   <>
-                    <button
-                      onClick={handleSyncGoverno}
-                      disabled={isSyncing}
-                      className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {isSyncing ? (
-                        <RefreshCw className="size-4 animate-spin" />
-                      ) : (
-                        <Database className="size-4" />
-                      )}
-                      Sincronizar DataSUS
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={handleSyncGoverno}
+                        disabled={isSyncing}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {isSyncing ? (
+                          <RefreshCw className="size-4 animate-spin" />
+                        ) : (
+                          <Database className="size-4" />
+                        )}
+                        Sincronizar DataSUS
+                      </button>
+                    )}
 
                     <button
                       onClick={() => setIsImportModalOpen(true)}
@@ -1044,13 +1046,16 @@ export default function SystemInformation() {
                           >
                             <Edit className="size-4" />
                           </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 text-red-600 bg-red-50 rounded-lg active:scale-95 transition-transform"
-                            title="Excluir"
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
+
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="p-2 text-red-600 bg-red-50 rounded-lg active:scale-95 transition-transform"
+                              title="Excluir"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <span className="text-slate-300 text-[10px] italic">
@@ -1156,13 +1161,16 @@ export default function SystemInformation() {
                               >
                                 <Edit className="size-4" />
                               </button>
-                              <button
-                                onClick={() => handleDelete(item.id)}
-                                className="p-1.5 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
-                                title="Excluir"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
+
+                              {isAdmin && (
+                                <button
+                                  onClick={() => handleDelete(item.id)}
+                                  className="p-1.5 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="size-4" />
+                                </button>
+                              )}
                             </div>
                           ) : (
                             <span className="text-slate-300 text-xs italic pr-2">
