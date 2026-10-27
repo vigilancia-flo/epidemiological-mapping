@@ -2135,7 +2135,7 @@ function EpidemiologicMap({ isPrivateView = false }) {
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
       <Helmet>
-        <title>Mapa Epidemiológico</title>
+        <title>Mapa Epidemiológico - Extensão Territórial</title>
       </Helmet>
       {isPrivateView ? (
         <SidebarPrivate
@@ -2273,7 +2273,7 @@ function EpidemiologicMap({ isPrivateView = false }) {
                           </MarkerLabel>
                         )}
                       </MarkerContent>
-                      <MarkerPopup className="w-[300px] p-0 overflow-hidden rounded-xl border border-slate-200 shadow-xl bg-white">
+                      <MarkerPopup className="w-75 p-0 overflow-hidden rounded-xl border border-slate-200 shadow-xl bg-white">
                         {/* Imagem de Capa */}
                         <div className="relative h-36 w-full overflow-hidden group">
                           <img
@@ -2282,7 +2282,7 @@ function EpidemiologicMap({ isPrivateView = false }) {
                             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                           />
                           {/* Gradiente sutil para melhorar contraste se necessário */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent" />
 
                           {/* Badge de Categoria */}
                           <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wider">

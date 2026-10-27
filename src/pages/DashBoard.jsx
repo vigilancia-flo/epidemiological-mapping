@@ -98,7 +98,7 @@ const ENDEMIAS = [
   {
     id: "intoxicacao",
     nome: "Casos de Intoxicação",
-    endpoint: "/api/animaispec/",
+    endpoint: "/api/intoxicacao/",
   },
   {
     id: "violencia",
@@ -773,7 +773,7 @@ export default function Dashboard({ isPrivateView = false }) {
           <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden shrink-0 group p-2 text-white bg-white/10 rounded-xl hover:bg-white/20 border border-transparent hover:border-white/10 transition-all duration-300"
+              className="md:hidden shrink-0 group p-2 text-white bg-white/10 rounded-xl hover:bg-white/20 border border-transparent hover:border-white/10 transition-all duration-300 cursor-pointer"
               aria-label="Abrir menu"
             >
               <Menu className="size-5 sm:size-6 group-hover:scale-110 transition-transform duration-200" />
@@ -805,7 +805,7 @@ export default function Dashboard({ isPrivateView = false }) {
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <div
-                  className="relative w-full sm:w-auto min-w-[200px]"
+                  className="relative w-full sm:w-auto min-w-50"
                   ref={periodoDropdownRef}
                 >
                   <button
@@ -816,18 +816,19 @@ export default function Dashboard({ isPrivateView = false }) {
                     className={`flex items-center justify-between w-full bg-white border ${
                       isPeriodoDropdownOpen
                         ? "border-[#4180ab] ring-2 ring-[#4180ab]/20"
-                        : "border-slate-200"
-                    } text-slate-700 rounded-lg px-4 py-2.5 outline-none font-medium shadow-sm transition-all hover:border-[#4180ab]/50 cursor-pointer`}
+                        : "border-slate-200 hover:border-slate-300"
+                    } text-slate-700 rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 outline-none shadow-sm transition-all hover:shadow cursor-pointer`}
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <CalendarDays className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm truncate">
+                    <div className="flex items-center gap-2.5 truncate">
+                      {/* Ícone de calendário um pouco mais escuro */}
+                      <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 shrink-0" />
+                      <span className="text-sm font-medium truncate text-slate-700">
                         {PERIODO_OPTIONS.find((opt) => opt.value === filtroTipo)
                           ?.label || "Selecione"}
                       </span>
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 text-slate-500 shrink-0 transition-transform duration-200 ${
                         isPeriodoDropdownOpen ? "rotate-180" : ""
                       }`}
                     />

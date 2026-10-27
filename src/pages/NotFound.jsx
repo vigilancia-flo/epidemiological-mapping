@@ -110,7 +110,7 @@ export default function NotFound() {
 
         {/* Rodapé */}
         <div className="mt-6 flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-white sm:text-xs">
-          EPI-DATA · Floriano, PI
+          SIGEP · Floriano, PI
         </div>
       </div>
     </div>

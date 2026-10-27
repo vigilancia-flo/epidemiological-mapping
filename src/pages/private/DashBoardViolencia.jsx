@@ -148,10 +148,12 @@ export default function DashboardViolencia({ pacientes }) {
                         className={`w-3 h-3 rounded-full shrink-0 ${item.color}`}
                       ></span>
                       <span className="font-medium text-slate-700">
-                        {index === 0 && item.value > 0 && (
-                          <span className="mr-1.5">🏆</span>
-                        )}
                         {item.name}
+                        {index === 0 && item.value > 0 && (
+                          <span className="text-[9px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded shrink-0 ml-3">
+                            TOP
+                          </span>
+                        )}
                       </span>
                     </div>
                     <span className="font-bold text-slate-800">

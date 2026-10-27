@@ -1,7 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -13,113 +11,154 @@ import {
   BarChart,
   Bar,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 // 1. CURVA EPIDÊMICA (Gráfico de Linha)
+// 1. CURVA EPIDÊMICA (Gráfico de Linha)
 export function CurvaEpidemica({ pacientes }) {
-  // Hook para detectar se é tela mobile
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); // Executa na primeira renderização
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const isMobile = useIsMobile();
 
   const data = useMemo(() => {
-    if (!pacientes || pacientes.length === 0) return [];
+    if (!pacientes?.length) return [];
 
-    // Agrupa os casos pela data de notificação
-    const contagem = {};
+    const map = new Map();
+    const pad = (n) => String(n).padStart(2, "0");
+
     pacientes.forEach((p) => {
-      const dataNotificacao = p.data_notificacao;
-      if (dataNotificacao) {
-        contagem[dataNotificacao] = (contagem[dataNotificacao] || 0) + 1;
-      }
+      if (!p.data_notificacao) return;
+      const d = new Date(`${p.data_notificacao}T12:00:00`);
+      if (isNaN(d)) return;
+
+      const year = d.getFullYear();
+      const jan1 = new Date(year, 0, 1, 12);
+      const firstSunday = new Date(year, 0, 1 + ((7 - jan1.getDay()) % 7), 12);
+      const se = Math.max(
+        1,
+        Math.floor((d - firstSunday) / (86400000 * 7)) + 1,
+      );
+
+      const key = `${year}-${pad(se)}`;
+      const cur = map.get(key) || {
+        key,
+        year,
+        se,
+        start: firstSunday,
+        casos: 0,
+      };
+      cur.casos += 1;
+      map.set(key, cur);
     });
 
-    // Converte para array e ordena por data
-    return Object.entries(contagem)
-      .map(([data, casos]) => ({ data, casos }))
-      .sort((a, b) => new Date(a.data) - new Date(b.data));
+    return Array.from(map.values())
+      .sort((a, b) => a.start - b.start)
+      .map((v) => {
+        const d = v.start;
+        const dd = pad(d.getDate());
+        const mm = pad(d.getMonth() + 1);
+        const yy = String(d.getFullYear()).slice(-2);
+        return {
+          ...v,
+          xLabel: `${dd}/${mm}/${yy}`,
+          xLabelShort: `${dd}/${mm}`,
+        };
+      });
   }, [pacientes]);
 
-  // Função para encurtar a data no mobile e não quebrar o layout
-  const formatXAxis = (tickItem) => {
-    if (!tickItem) return "";
-    const partes = tickItem.split("-");
-    if (partes.length === 3) {
-      // Retorna DD/MM no mobile e DD/MM/AA no desktop
-      return isMobile
-        ? `${partes[2]}/${partes[1]}`
-        : `${partes[2]}/${partes[1]}/${partes[0].slice(-2)}`;
-    }
-    return tickItem;
-  };
-
   return (
-    // Adicionado overflow-hidden e ajuste de padding no mobile
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6 flex flex-col h-full overflow-hidden w-full">
-      <div className="mb-4 md:mb-6">
-        <h3 className="text-lg font-bold text-slate-800">Curva Epidêmica</h3>
-        <p className="text-sm text-slate-500">
-          Evolução de casos ao longo do tempo
-        </p>
+      <div className="mb-4 md:mb-6 flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-lg font-bold text-slate-800">Curva Epidêmica</h3>
+          <p className="text-sm text-slate-500">
+            Casos notificados por Semana Epidemiológica
+          </p>
+        </div>
+        <span className="shrink-0 rounded-md border border-slate-100 bg-slate-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          SE
+        </span>
       </div>
 
-      {/* Ajuste para garantir a renderização do ResponsiveContainer */}
-      <div className="flex-1 w-full min-h-[250px] md:min-h-62.5">
+      <div className="flex-1 w-full min-h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
+          <AreaChart
             data={data}
-            // Margens dinâmicas: reduzimos as margens laterais no mobile
             margin={{
-              top: 5,
-              right: isMobile ? 10 : 20,
-              left: isMobile ? -30 : -20,
+              top: 10,
+              right: isMobile ? 8 : 16,
+              left: isMobile ? -28 : -20,
               bottom: 5,
             }}
           >
+            <defs>
+              <linearGradient id="grad-epi" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#e11d48" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#e11d48" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
               stroke="#e2e8f0"
             />
             <XAxis
-              dataKey="data"
-              tickFormatter={formatXAxis}
+              dataKey={isMobile ? "xLabelShort" : "xLabel"}
               tick={{ fontSize: isMobile ? 10 : 12, fill: "#64748b" }}
-              tickMargin={isMobile ? 5 : 10}
-              minTickGap={isMobile ? 15 : 5} // Força espaçamento entre as datas no mobile
+              tickMargin={8}
+              minTickGap={isMobile ? 20 : 24}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis
               allowDecimals={false}
               tick={{ fontSize: isMobile ? 10 : 12, fill: "#64748b" }}
-              width={isMobile ? 30 : 40} // Eixo Y mais fino no mobile
+              width={isMobile ? 30 : 40}
+              axisLine={false}
+              tickLine={false}
             />
+
             <Tooltip
-              contentStyle={{
-                borderRadius: "8px",
-                border: "none",
-                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              cursor={{
+                stroke: "#e11d48",
+                strokeWidth: 1,
+                strokeDasharray: "4 4",
               }}
-              labelStyle={{ fontWeight: "bold", color: "#334155" }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-lg border border-slate-100 bg-white p-3 shadow-lg">
+                    <p className="text-xs font-bold text-slate-800">
+                      SE {String(d.se).padStart(2, "0")} / {d.year}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      <span className="font-bold text-rose-600">{d.casos}</span>{" "}
+                      {d.casos === 1 ? "caso" : "casos"}
+                    </p>
+                  </div>
+                );
+              }}
             />
-            <Line
+
+            <Area
               type="monotone"
               dataKey="casos"
-              name="Casos Notificados"
+              name="Casos"
               stroke="#e11d48"
-              strokeWidth={3}
-              dot={{ r: isMobile ? 3 : 4, strokeWidth: 2, fill: "#fff" }}
+              strokeWidth={2.5}
+              fill="url(#grad-epi)"
+              dot={false}
               activeDot={{
-                r: isMobile ? 5 : 6,
-                strokeWidth: 0,
-                fill: "#e11d48",
+                r: 5,
+                strokeWidth: 2,
+                fill: "#fff",
+                stroke: "#e11d48",
               }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
@@ -128,14 +167,7 @@ export function CurvaEpidemica({ pacientes }) {
 
 export function StatusDonut({ pacientes }) {
   // 1. Adicionamos o hook para detectar mobile
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); // Executa na primeira renderização
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const isMobile = useIsMobile();
 
   const data = useMemo(() => {
     let confirmado = 0,
@@ -172,7 +204,7 @@ export function StatusDonut({ pacientes }) {
 
   return (
     // Ajustado padding e overflow para mobile
-    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6 flex flex-col h-full w-full overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6 flex flex-col h-full w-full overflow-hidden mb-15">
       <div className="mb-2">
         <h3 className="text-lg font-bold text-slate-800">Status dos Casos</h3>
         <p className="text-sm text-slate-500">
@@ -210,7 +242,6 @@ export function StatusDonut({ pacientes }) {
             />
           </PieChart>
         </ResponsiveContainer>
-        {/* Legenda Customizada com espaçamentos corrigidos pro mobile */}
         <div
           className={`flex flex-wrap justify-center gap-2 md:gap-3 ${isMobile ? "-mt-14" : "-mt-18.75"} pb-2`}
         >
@@ -236,6 +267,7 @@ export function StatusDonut({ pacientes }) {
 
 // ========= PERFIL DEMOGRÁFICO (Gráfico de Barras) =========
 export function PerfilDemografico({ pacientes }) {
+  const isMobile = useIsMobile();
   const data = useMemo(() => {
     const grupos = {
       "0-9": { faixa: "0-9", M: 0, F: 0 },
@@ -322,14 +354,14 @@ export function PerfilDemografico({ pacientes }) {
               name="Masculino"
               fill="#3b82f6"
               radius={[4, 4, 0, 0]}
-              barSize={12}
+              barSize={isMobile ? 8 : 12}
             />
             <Bar
               dataKey="F"
               name="Feminino"
               fill="#ec4899"
               radius={[4, 4, 0, 0]}
-              barSize={12}
+              barSize={isMobile ? 8 : 12}
             />
           </BarChart>
         </ResponsiveContainer>

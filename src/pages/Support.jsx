@@ -69,12 +69,9 @@ function carregarHistorico() {
 function limparHistorico() {
   try {
     sessionStorage.removeItem(STORAGE_KEY);
-  } catch (_) {
-    /* ignore */
-  }
+  } catch (_) {}
 }
 
-/** Ranking com barras horizontais — usado para "top bairros", "panorama geral" */
 function RankingCard({ data }) {
   const max = Math.max(...data.itens.map((i) => i.valor), 1);
   const medalhas = ["🥇", "🥈", "🥉"];
@@ -111,7 +108,6 @@ function RankingCard({ data }) {
   );
 }
 
-/** KPI grande — usado para "quantos casos de X" */
 function KpiCard({ data }) {
   return (
     <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-gradient-to-br from-[#4180ab]/10 to-white p-5 shadow-sm w-full">
@@ -125,8 +121,6 @@ function KpiCard({ data }) {
     </div>
   );
 }
-
-/** Tabela compacta — usado para cobertura vacinal */
 function TabelaCard({ data }) {
   return (
     <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-white p-4 shadow-sm w-full overflow-hidden">
@@ -368,7 +362,6 @@ function Support({ isPrivateView = false }) {
         </header>
 
         <div className="p-4 md:p-8 lg:p-10 w-full max-w-7xl mx-auto space-y-8 pb-24">
-          {/* Hero Section */}
           <section className="bg-[#4180ab] text-white py-12 md:py-16 px-6 lg:px-12 relative overflow-hidden rounded-3xl shadow-xl border border-white/10">
             <div className="absolute inset-0 opacity-30 pointer-events-none">
               <div className="absolute top-0 left-10 w-40 h-40 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
@@ -423,7 +416,6 @@ function Support({ isPrivateView = false }) {
               <HelpCircle className="text-[#4180ab] size-6" />
               Dúvidas Frequentes
             </h2>
-            {/* Adicionado 'items-start' para evitar que os cards estiquem */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               {FAQS.map((faq, index) => {
                 const isOpen = openFaq === index;
@@ -498,7 +490,7 @@ function Support({ isPrivateView = false }) {
               ajudar pelo email:{" "}
               <a
                 href="mailto:vigilanciafloriano@gmail.com"
-                className="text-amber-700 hover:text-amber-800 font-bold underline underline-offset-2 break-all transition-colors"
+                className="text-amber-700 hover:text-amber-800 font-bold underline underline-offset-2 break-all transition-colors hover:no-underline"
               >
                 vigilanciafloriano@gmail.com
               </a>
@@ -506,7 +498,6 @@ function Support({ isPrivateView = false }) {
           </div>
         </div>
 
-        {/* Botão flutuante do Chatbot */}
         {!isChatbotOpen && (
           <button
             onClick={toggleChatbot}
@@ -518,10 +509,8 @@ function Support({ isPrivateView = false }) {
           </button>
         )}
 
-        {/* Janela do Chatbot Modal */}
         {isChatbotOpen && (
           <div className="fixed inset-0 md:inset-auto md:bottom-8 md:right-8 w-full h-[100dvh] md:h-[600px] md:w-[400px] bg-white md:rounded-3xl shadow-2xl border border-slate-200 z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
-            {/* Header do Chat */}
             <div className="bg-[#4180ab] p-4 md:p-5 flex justify-between items-center shadow-md z-10 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/30 backdrop-blur-sm">
@@ -557,7 +546,6 @@ function Support({ isPrivateView = false }) {
               </div>
             </div>
 
-            {/* Área de Mensagens */}
             <div className="flex-1 p-4 md:p-5 flex flex-col gap-4 overflow-y-auto bg-slate-50/50 scroll-smooth">
               <div className="text-center mb-2">
                 <span className="text-xs text-slate-400 font-medium bg-slate-100 px-3 py-1 rounded-full">
@@ -618,7 +606,6 @@ function Support({ isPrivateView = false }) {
                 );
               })}
 
-              {/* Indicador de Digitação */}
               {isLoading && (
                 <div className="flex w-full justify-start">
                   <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-4 shadow-sm flex items-center gap-1.5">
@@ -638,7 +625,6 @@ function Support({ isPrivateView = false }) {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Área de Input */}
             <div className="p-4 bg-white border-t border-slate-100 flex-shrink-0">
               <div className="relative flex items-end gap-2 bg-slate-50 rounded-3xl border border-slate-200 focus-within:border-[#054060] focus-within:ring-2 focus-within:ring-[#054060]/20 transition-all p-1.5 pl-5">
                 <textarea
