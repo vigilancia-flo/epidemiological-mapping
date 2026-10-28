@@ -2290,7 +2290,7 @@ export default function MapAids({ isPrivateView = false }) {
                     linePaint={{
                       "line-color": ["get", "color"],
                       "line-width": ["case", ["==", ["get", "casos"], 0], 1, 2],
-                      "line-dasharray": [2, 2],
+                      "line-dasharray": [1, 0],
                     }}
                     interactive={true}
                     onHover={(e) => {
