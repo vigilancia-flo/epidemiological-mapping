@@ -7,6 +7,7 @@ import EndemiasFilter from "../../components/EndemiasFilter.jsx";
 import EndemiasFilterPrivate from "../../components/private/EndemiasFilterPrivate.jsx";
 import ButtonTheme from "../../components/ButtonTheme.jsx";
 import MapPeriodFilter from "@/components/MapPeriodFilter.jsx";
+import { useFiltrosMapa } from "@/hooks/useFiltrosMapa.js";
 import {
   Map,
   MapGeoJSON,
@@ -1934,6 +1935,14 @@ const marcadores = [
 ];
 
 export default function MapTubercu({ isPrivateView = false }) {
+  const {
+    filtroTipo: filtroPeriodo,
+    setFiltroTipo: setFiltroPeriodo,
+    dataInicio,
+    setDataInicio,
+    dataFim,
+    setDataFim,
+  } = useFiltrosMapa();
   const mapRef = useRef(null);
   const [activeStyle, setActiveStyle] = useState("light");
   const [geoData, setGeoData] = useState(bairrosFlorianoGeoJSON);
@@ -1944,10 +1953,6 @@ export default function MapTubercu({ isPrivateView = false }) {
 
   // Aqui já deixamos travado na tuberculose
   const endemiaAtual = "tuberculose";
-
-  const [filtroPeriodo, setFiltroPeriodo] = useState("todos");
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
 
   const handleEndemiaChange = (novaEndemia) => {
     if (novaEndemia === endemiaAtual) return;

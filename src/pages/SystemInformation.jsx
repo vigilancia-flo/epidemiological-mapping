@@ -65,7 +65,6 @@ const BACKEND_KEYS = {
   intoxicacao: "intoxicacao",
   leish: "leishmaniose",
   aidsadulta: "aids",
-  // coberturavacinal não está em DOENCAS → exportação bloqueada
 };
 
 const FORMATOS_EXPORT = [
@@ -176,15 +175,11 @@ const REGRAS_NOMENCLATURA = [
   },
 ];
 
-const getToken = () => {
-  return (
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("access_token") ||
-    null
-  );
-};
-
+const getToken = () =>
+  localStorage.getItem("access_token") ||
+  localStorage.getItem("token") ||
+  sessionStorage.getItem("access_token") ||
+  null;
 const getAuthHeaders = (extraHeaders = {}) => {
   const token = getToken();
   return {
@@ -192,20 +187,15 @@ const getAuthHeaders = (extraHeaders = {}) => {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
-
 const handleAuthError = (status) => {
   if (status === 401) {
-    console.warn("Token expirado/inválido. Redirecionando para login...");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh_token");
+    localStorage.clear();
     sessionStorage.clear();
     window.location.href = "/login";
     return true;
   }
   return false;
 };
-
 const isAdminUser = () => {
   try {
     const token =
@@ -213,9 +203,7 @@ const isAdminUser = () => {
       localStorage.getItem("token") ||
       sessionStorage.getItem("access_token");
     if (!token) return false;
-
     const payload = JSON.parse(atob(token.split(".")[1]));
-
     return (
       payload.role === "ADMIN" ||
       payload.role === "admin" ||
@@ -245,16 +233,26 @@ export default function SystemInformation() {
   const [isTableDropdownOpen, setIsTableDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // === Export ===
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(null); // guarda o formato em andamento
+  const [isExporting, setIsExporting] = useState(null);
   const exportDropdownRef = useRef(null);
 
   const [mensagem, setMensagem] = useState({ texto: "", tipo: "" });
   const [isDocOpen, setIsDocOpen] = useState(false);
 
-  const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "";
+  // Estados do Relatório (Agora com valor inicial "todos" para o mês)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isAgravoDropdownOpen, setIsAgravoDropdownOpen] = useState(false);
+  const agravoDropdownRef = useRef(null);
 
+  const [reportData, setReportData] = useState({
+    mes: "todos", // "todos" ou número do mês
+    ano: new Date().getFullYear(),
+    agravo: "geral",
+  });
+
+  const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "";
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -263,15 +261,18 @@ export default function SystemInformation() {
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
         setIsTableDropdownOpen(false);
-      }
       if (
         exportDropdownRef.current &&
         !exportDropdownRef.current.contains(event.target)
-      ) {
+      )
         setIsExportDropdownOpen(false);
-      }
+      if (
+        agravoDropdownRef.current &&
+        !agravoDropdownRef.current.contains(event.target)
+      )
+        setIsAgravoDropdownOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside);
@@ -281,32 +282,9 @@ export default function SystemInformation() {
     };
   }, []);
 
-  const handleSyncGoverno = async () => {
-    setIsSyncing(true);
-    setMensagem({
-      texto:
-        "Conectando ao Ministério da Saúde. Isso pode levar alguns segundos...",
-      tipo: "sucesso",
-    });
-    try {
-      const response = await fetch(`${baseUrl}/api/sincronizar-governo/`, {
-        method: "POST",
-        headers: getAuthHeaders({ "Content-Type": "application/json" }),
-      });
-      const data = await response.json();
-      if (handleAuthError(response.status)) return;
-      if (!response.ok) throw new Error(data.erro || "Falha na sincronização.");
-      mostrarMensagem(data.mensagem, "sucesso");
-      fetchDados();
-    } catch (error) {
-      console.error(error);
-      mostrarMensagem(
-        error.message || "Erro ao sincronizar com a API do SUS.",
-        "erro",
-      );
-    } finally {
-      setIsSyncing(false);
-    }
+  const mostrarMensagem = (texto, tipo) => {
+    setMensagem({ texto, tipo });
+    setTimeout(() => setMensagem({ texto: "", tipo: "" }), 5000);
   };
 
   const fetchDados = async () => {
@@ -315,25 +293,15 @@ export default function SystemInformation() {
     try {
       const response = await fetch(`${baseUrl}${tabelaAtiva.endpoint}`, {
         method: "GET",
-        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        headers: getAuthHeaders(),
       });
-
       if (handleAuthError(response.status)) return;
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        console.error("Erro na requisição:", response.status, errBody);
+      if (!response.ok)
         throw new Error(`Erro ${response.status} ao buscar dados`);
-      }
-
       const data = await response.json();
       setDados(data);
     } catch (error) {
-      console.error("Erro na requisição:", error);
-      mostrarMensagem(
-        "Erro ao carregar os dados. Verifique a conexão com o servidor.",
-        "erro",
-      );
+      mostrarMensagem("Erro ao carregar os dados.", "erro");
     } finally {
       setLoading(false);
     }
@@ -343,9 +311,27 @@ export default function SystemInformation() {
     fetchDados();
   }, [tabelaAtiva]);
 
-  const mostrarMensagem = (texto, tipo) => {
-    setMensagem({ texto, tipo });
-    setTimeout(() => setMensagem({ texto: "", tipo: "" }), 5000);
+  const handleSyncGoverno = async () => {
+    setIsSyncing(true);
+    setMensagem({
+      texto: "Sincronizando com o Ministério da Saúde...",
+      tipo: "sucesso",
+    });
+    try {
+      const response = await fetch(`${baseUrl}/api/sincronizar-governo/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (handleAuthError(response.status)) return;
+      if (!response.ok) throw new Error(data.erro || "Falha na sincronização.");
+      mostrarMensagem(data.mensagem, "sucesso");
+      fetchDados();
+    } catch (error) {
+      mostrarMensagem(error.message || "Erro ao sincronizar.", "erro");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const dadosFiltrados = useMemo(() => {
@@ -378,11 +364,8 @@ export default function SystemInformation() {
     setFormData({});
     setEditingId(null);
   };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleInputChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -390,22 +373,14 @@ export default function SystemInformation() {
     const url = editingId
       ? `${baseUrl}${tabelaAtiva.endpoint}${editingId}/`
       : `${baseUrl}${tabelaAtiva.endpoint}`;
-    const method = editingId ? "PUT" : "POST";
     try {
       const response = await fetch(url, {
-        method,
+        method: editingId ? "PUT" : "POST",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(formData),
       });
-
       if (handleAuthError(response.status)) return;
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        console.error("Erro ao salvar:", response.status, errBody);
-        throw new Error("Falha ao salvar o registro.");
-      }
-
+      if (!response.ok) throw new Error("Falha ao salvar o registro.");
       mostrarMensagem(
         `Registro ${editingId ? "atualizado" : "criado"} com sucesso!`,
         "sucesso",
@@ -413,7 +388,6 @@ export default function SystemInformation() {
       handleCloseModal();
       fetchDados();
     } catch (error) {
-      console.error(error);
       mostrarMensagem("Erro ao salvar o registro.", "erro");
     } finally {
       setLoading(false);
@@ -421,33 +395,19 @@ export default function SystemInformation() {
   };
 
   const handleDelete = async (id) => {
-    if (
-      !window.confirm(
-        "Tem certeza que deseja excluir este registro irreversivelmente?",
-      )
-    )
-      return;
+    if (!window.confirm("Tem certeza que deseja excluir?")) return;
     setLoading(true);
     try {
       const response = await fetch(`${baseUrl}${tabelaAtiva.endpoint}${id}/`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
-
       if (handleAuthError(response.status)) return;
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error("Você não tem permissão para excluir registros.");
-        }
-        throw new Error("Falha ao excluir.");
-      }
-
+      if (!response.ok) throw new Error("Falha ao excluir.");
       mostrarMensagem("Registro excluído com sucesso!", "sucesso");
       fetchDados();
     } catch (error) {
-      console.error(error);
-      mostrarMensagem(error.message || "Erro ao excluir o registro.", "erro");
+      mostrarMensagem(error.message || "Erro ao excluir.", "erro");
     } finally {
       setLoading(false);
     }
@@ -466,74 +426,36 @@ export default function SystemInformation() {
         headers: getAuthHeaders(),
         body: formDataUpload,
       });
-
       if (handleAuthError(response.status)) return;
-
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          data?.erro || "Falha ao importar. Verifique o formato do arquivo.",
-        );
-      }
+      if (!response.ok) throw new Error(data?.erro || "Falha ao importar.");
       mostrarMensagem(
-        data?.mensagem || "Arquivo importado e processado com sucesso!",
+        data?.mensagem || "Arquivo importado com sucesso!",
         "sucesso",
       );
       setIsImportModalOpen(false);
       setUploadFile(null);
       fetchDados();
     } catch (error) {
-      console.error(error);
-      mostrarMensagem(
-        error.message || "Erro ao importar. Verifique o formato do arquivo.",
-        "erro",
-      );
+      mostrarMensagem(error.message || "Erro ao importar.", "erro");
     } finally {
       setIsUploading(false);
     }
   };
 
-  // ============================================================ EXPORT
   const handleExport = async (formato) => {
     const backendKey = BACKEND_KEYS[tabelaAtiva.id];
-    if (!backendKey) {
-      mostrarMensagem(
-        `Exportação não disponível para ${tabelaAtiva.nome}.`,
-        "erro",
-      );
-      setIsExportDropdownOpen(false);
-      return;
-    }
-
+    if (!backendKey) return;
     setIsExporting(formato);
-    setMensagem({ texto: "", tipo: "" });
-
     try {
-      const params = new URLSearchParams({ formato });
-      const url = `${baseUrl}/api/exportar/${backendKey}/?${params.toString()}`;
-
+      const url = `${baseUrl}/api/exportar/${backendKey}/?formato=${formato}`;
       const response = await fetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
       });
-
       if (handleAuthError(response.status)) return;
-
-      if (!response.ok) {
-        // tenta extrair o JSON de erro do backend
-        let erroMsg = `Erro ${response.status} ao exportar`;
-        try {
-          const body = await response.json();
-          if (body?.erro) erroMsg = body.erro;
-        } catch {
-          /* corpo não era JSON, mantém mensagem padrão */
-        }
-        throw new Error(erroMsg);
-      }
-
+      if (!response.ok) throw new Error(`Erro ao exportar`);
       const blob = await response.blob();
-
-      // Dispara o download via âncora temporária
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
@@ -542,17 +464,58 @@ export default function SystemInformation() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(downloadUrl);
-
-      mostrarMensagem(
-        `${tabelaAtiva.nome} exportada com sucesso como ${formato.toUpperCase()}!`,
-        "sucesso",
-      );
+      mostrarMensagem(`Exportado com sucesso!`, "sucesso");
     } catch (error) {
-      console.error("Erro ao exportar:", error);
-      mostrarMensagem(error.message || "Erro ao exportar os dados.", "erro");
+      mostrarMensagem(error.message, "erro");
     } finally {
       setIsExporting(null);
       setIsExportDropdownOpen(false);
+    }
+  };
+
+  // ✅ FUNÇÃO DE DOWNLOAD DO PDF FLEXÍVEL
+  const handleDownloadReport = async (e) => {
+    e.preventDefault();
+    setIsGeneratingReport(true);
+    setMensagem({ texto: "Gerando PDF, aguarde...", tipo: "sucesso" });
+
+    try {
+      const { mes, ano, agravo } = reportData;
+
+      // Se o mês for 'todos', não envia o parâmetro. Se for numérico, envia.
+      const mesParam = mes !== "todos" ? `&mes=${mes}` : "";
+      const url = `${baseUrl}/api/relatorios/mensal/?ano=${ano}&agravo=${agravo}${mesParam}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      if (handleAuthError(response.status)) return;
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.erro || "Falha ao gerar o relatório.");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+
+      const sufixoMes =
+        mes !== "todos" ? `_${String(mes).padStart(2, "0")}` : "_anual";
+      a.download = `relatorio_${agravo}${sufixoMes}_${ano}.pdf`;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      mostrarMensagem("Relatório gerado com sucesso!", "sucesso");
+      setIsReportModalOpen(false);
+    } catch (error) {
+      mostrarMensagem(error.message || "Erro ao gerar relatório.", "erro");
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -593,17 +556,12 @@ export default function SystemInformation() {
             <p className="text-slate-500 text-xs sm:text-sm">
               Visualize, edite, remova e importe dados brutos SINAN do sistema.
             </p>
-
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative w-full sm:w-64" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setIsTableDropdownOpen(!isTableDropdownOpen)}
-                  className={`flex items-center justify-between w-full bg-white border ${
-                    isTableDropdownOpen
-                      ? "border-[#4180ab] ring-2 ring-[#4180ab]/20"
-                      : "border-slate-300"
-                  } text-slate-700 rounded-xl px-4 py-2.5 outline-none font-medium shadow-sm transition-all hover:border-[#4180ab]/50 cursor-pointer`}
+                  className={`flex items-center justify-between w-full bg-white border ${isTableDropdownOpen ? "border-[#4180ab] ring-2 ring-[#4180ab]/20" : "border-slate-300"} text-slate-700 rounded-xl px-4 py-2.5 outline-none font-medium shadow-sm transition-all hover:border-[#4180ab]/50 cursor-pointer`}
                 >
                   <div className="flex items-center gap-2 truncate">
                     <Database className="w-4 h-4 text-[#4180ab] shrink-0" />
@@ -612,12 +570,9 @@ export default function SystemInformation() {
                     </span>
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ${
-                      isTableDropdownOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ${isTableDropdownOpen ? "rotate-180" : ""}`}
                   />
                 </button>
-
                 {isTableDropdownOpen && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 max-h-72 overflow-y-auto custom-scrollbar">
                     <div className="p-1">
@@ -630,11 +585,7 @@ export default function SystemInformation() {
                               setTabelaAtiva(tabela);
                               setIsTableDropdownOpen(false);
                             }}
-                            className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-left rounded-lg transition-colors cursor-pointer ${
-                              isSelected
-                                ? "bg-[#4180ab]/10 text-[#4180ab] font-bold"
-                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"
-                            }`}
+                            className={`flex items-center justify-between w-full px-3 py-2.5 text-sm text-left rounded-lg transition-colors cursor-pointer ${isSelected ? "bg-[#4180ab]/10 text-[#4180ab] font-bold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"}`}
                           >
                             <span className="truncate">{tabela.nome}</span>
                             {isSelected && (
@@ -647,7 +598,6 @@ export default function SystemInformation() {
                   </div>
                 )}
               </div>
-
               <button
                 onClick={fetchDados}
                 disabled={loading}
@@ -664,16 +614,12 @@ export default function SystemInformation() {
 
           {mensagem.texto && (
             <div
-              className={`p-3 sm:p-4 rounded-xl flex items-start sm:items-center gap-3 border ${
-                mensagem.tipo === "sucesso"
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                  : "bg-red-50 border-red-200 text-red-700"
-              }`}
+              className={`p-3 sm:p-4 rounded-xl flex items-start sm:items-center gap-3 border ${mensagem.tipo === "sucesso" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}
             >
               {mensagem.tipo === "sucesso" ? (
-                <CheckCircle2 className="size-5 shrink-0 mt-0.5 sm:mt-0" />
+                <CheckCircle2 className="size-5 shrink-0" />
               ) : (
-                <AlertCircle className="size-5 shrink-0 mt-0.5 sm:mt-0" />
+                <AlertCircle className="size-5 shrink-0" />
               )}
               <span className="font-medium text-xs sm:text-sm">
                 {mensagem.texto}
@@ -681,7 +627,7 @@ export default function SystemInformation() {
             </div>
           )}
 
-          {/* === MINI DOCUMENTAÇÃO === */}
+          {/* MINI DOCUMENTAÇÃO */}
           <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
             <button
               type="button"
@@ -712,7 +658,6 @@ export default function SystemInformation() {
                 )}
               </div>
             </button>
-
             {isDocOpen && (
               <div className="border-t border-slate-100 p-4 sm:p-6 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
@@ -725,24 +670,22 @@ export default function SystemInformation() {
                     <p>
                       O sistema identifica a doença pela{" "}
                       <strong>parte inicial do nome do arquivo</strong> (antes
-                      da extensão). Se o nome não contiver nenhum dos prefixos
-                      da lista abaixo, a importação será recusada.
+                      da extensão).
                     </p>
                   </div>
                 </div>
-
                 <div className="overflow-x-auto rounded-xl border border-slate-200">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
                           Prefixo obrigatório
                         </th>
-                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
                           Tabela de destino
                         </th>
-                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                          Exemplo de arquivo
+                        <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
+                          Exemplo
                         </th>
                       </tr>
                     </thead>
@@ -750,129 +693,23 @@ export default function SystemInformation() {
                       {REGRAS_NOMENCLATURA.map((regra) => (
                         <tr
                           key={regra.prefixo}
-                          className="hover:bg-slate-50/70 transition-colors"
+                          className="hover:bg-slate-50/70"
                         >
-                          <td className="px-4 py-2.5 whitespace-nowrap">
+                          <td className="px-4 py-2.5">
                             <code className="px-2 py-1 bg-[#4180ab]/10 text-[#4180ab] text-xs font-bold rounded-md font-mono">
                               {regra.prefixo}
                             </code>
                           </td>
-                          <td className="px-4 py-2.5 text-slate-700 font-medium whitespace-nowrap">
+                          <td className="px-4 py-2.5 text-slate-700 font-medium">
                             {regra.tabela}
                           </td>
-                          <td className="px-4 py-2.5 text-slate-500 font-mono text-xs whitespace-nowrap">
+                          <td className="px-4 py-2.5 text-slate-500 font-mono text-xs">
                             {regra.exemplo}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                      <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
-                        Válidos
-                      </p>
-                    </div>
-                    <ul className="space-y-1 text-xs sm:text-sm text-emerald-800 font-mono">
-                      <li>✅ DENGBR26.dbf</li>
-                      <li>✅ dengue.xlsx</li>
-                      <li>✅ TUBERCU_2026.xls</li>
-                      <li>✅ hans_jan_dez.dbf</li>
-                    </ul>
-                  </div>
-
-                  <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="size-4 text-red-600 shrink-0" />
-                      <p className="text-xs font-bold text-red-800 uppercase tracking-wide">
-                        Inválidos
-                      </p>
-                    </div>
-                    <ul className="space-y-1 text-xs sm:text-sm text-red-800 font-mono">
-                      <li>❌ planilha_final.xlsx</li>
-                      <li>❌ dados_2026.dbf</li>
-                      <li>❌ notificacoes.xls</li>
-                      <li>❌ arquivo.dbf</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100">
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-600">
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#4180ab] font-bold shrink-0">
-                        •
-                      </span>
-                      <span>
-                        <strong>Extensões aceitas:</strong>{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          .dbf
-                        </code>{" "}
-                        (padrão SINAN),{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          .xlsx
-                        </code>
-                        ,{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          .xls
-                        </code>{" "}
-                        (Excel) e{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          .csv
-                        </code>{" "}
-                        (CSV).
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#4180ab] font-bold shrink-0">
-                        •
-                      </span>
-                      <span>
-                        <strong>Colunas:</strong> para arquivos Excel, os
-                        cabeçalhos devem seguir o padrão SINAN (ex:{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          NU_NOTIFIC
-                        </code>
-                        ,{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          NM_PACIENT
-                        </code>
-                        ,{" "}
-                        <code className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono">
-                          DT_NOTIFIC
-                        </code>
-                        ).
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#4180ab] font-bold shrink-0">
-                        •
-                      </span>
-                      <span>
-                        <strong>Maiúsculas/minúsculas:</strong> não importa — o
-                        sistema normaliza automaticamente.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-[#4180ab] font-bold shrink-0">
-                        •
-                      </span>
-                      <span>
-                        <strong>Dúvidas?</strong> Contate{" "}
-                        <a
-                          href="mailto:vigilanciafloriano@gmail.com"
-                          className="text-[#4180ab] font-semibold hover:underline"
-                        >
-                          vigilanciafloriano@gmail.com
-                        </a>
-                        .
-                      </span>
-                    </li>
-                  </ul>
                 </div>
               </div>
             )}
@@ -890,7 +727,6 @@ export default function SystemInformation() {
                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#4180ab] focus:ring-1 focus:ring-[#4180ab] transition-all"
                 />
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto md:ml-auto">
                 {podeEditar && (
                   <>
@@ -898,26 +734,30 @@ export default function SystemInformation() {
                       <button
                         onClick={handleSyncGoverno}
                         disabled={isSyncing}
-                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70"
                       >
                         {isSyncing ? (
                           <RefreshCw className="size-4 animate-spin" />
                         ) : (
                           <Database className="size-4" />
-                        )}
+                        )}{" "}
                         Sincronizar DataSUS
                       </button>
                     )}
-
+                    {isAdmin && (
+                      <button
+                        onClick={() => setIsReportModalOpen(true)}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
+                      >
+                        <FileText className="size-4 shrink-0" /> Relatório PDF
+                      </button>
+                    )}
                     <button
                       onClick={() => setIsImportModalOpen(true)}
                       className="w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
                     >
-                      <Upload className="size-4 shrink-0" />
-                      Importar
+                      <Upload className="size-4 shrink-0" /> Importar
                     </button>
-
-                    {/* ===== BOTÃO EXPORTAR (dropdown) ===== */}
                     {podeExportar && (
                       <div
                         className="relative w-full md:w-auto"
@@ -927,184 +767,78 @@ export default function SystemInformation() {
                           type="button"
                           onClick={() => setIsExportDropdownOpen((v) => !v)}
                           disabled={!!isExporting || loading}
-                          className={`w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
-                            isExportDropdownOpen ? "ring-2 ring-amber-300" : ""
-                          }`}
+                          className={`w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer ${isExportDropdownOpen ? "ring-2 ring-amber-300" : ""}`}
                         >
                           {isExporting ? (
                             <RefreshCw className="size-4 animate-spin" />
                           ) : (
                             <Download className="size-4 shrink-0" />
-                          )}
-                          {isExporting
-                            ? `Exportando ${isExporting.toUpperCase()}...`
-                            : "Exportar"}
+                          )}{" "}
+                          {isExporting ? `Exportando...` : "Exportar"}{" "}
                           <ChevronDown
-                            className={`size-3.5 transition-transform duration-200 ${
-                              isExportDropdownOpen ? "rotate-180" : ""
-                            }`}
+                            className={`size-3.5 transition-transform duration-200 ${isExportDropdownOpen ? "rotate-180" : ""}`}
                           />
                         </button>
-
                         {isExportDropdownOpen && (
                           <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
-                            {/* ... (conteúdo do dropdown mantido igual) ... */}
-                            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                                Formato de exportação
-                              </p>
-                              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                                {tabelaAtiva.nome} • {dadosFiltrados.length}{" "}
-                                registro(s)
-                              </p>
-                            </div>
-
                             <div className="p-1">
-                              {FORMATOS_EXPORT.map((fmt) => {
-                                const Icon = fmt.icon;
-                                const isCurrent = isExporting === fmt.id;
-                                return (
-                                  <button
-                                    key={fmt.id}
-                                    onClick={() => handleExport(fmt.id)}
-                                    disabled={!!isExporting}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+                              {FORMATOS_EXPORT.map((fmt) => (
+                                <button
+                                  key={fmt.id}
+                                  onClick={() => handleExport(fmt.id)}
+                                  disabled={!!isExporting}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
+                                >
+                                  <div
+                                    className={`p-2 rounded-lg ${fmt.bg} shrink-0`}
                                   >
-                                    <div
-                                      className={`p-2 rounded-lg ${fmt.bg} shrink-0 group-hover:scale-105 transition-transform`}
-                                    >
-                                      {isCurrent ? (
-                                        <RefreshCw
-                                          className={`size-4 ${fmt.accent} animate-spin`}
-                                        />
-                                      ) : (
-                                        <Icon
-                                          className={`size-4 ${fmt.accent}`}
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-semibold text-slate-800 truncate">
-                                        {fmt.label}
-                                      </p>
-                                      <p className="text-[11px] text-slate-500 truncate">
-                                        {fmt.desc}
-                                      </p>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100">
-                              <p className="text-[10px] text-slate-400 leading-relaxed">
-                                💡 A exportação respeita o escopo de acesso: UBS
-                                exporta somente os próprios registros.
-                              </p>
+                                    <fmt.icon
+                                      className={`size-4 ${fmt.accent}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-800">
+                                      {fmt.label}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500">
+                                      {fmt.desc}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))}
                             </div>
                           </div>
                         )}
                       </div>
                     )}
-
                     <button
                       onClick={() => handleOpenModal()}
                       className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#4180ab] hover:bg-[#32678c] text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm hover:cursor-pointer"
                     >
-                      <Plus className="size-4 shrink-0" />
-                      Adicionar
+                      <Plus className="size-4 shrink-0" /> Adicionar
                     </button>
                   </>
                 )}
               </div>
             </div>
 
-            {/* === MOBILE: Cards === */}
-            <div className="md:hidden divide-y divide-slate-100">
-              {loading && dados.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-sm">
-                  <RefreshCw className="size-6 animate-spin mx-auto mb-2 text-[#4180ab]" />
-                  Carregando registros...
-                </div>
-              ) : dadosFiltrados.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 font-medium text-sm">
-                  Nenhum registro encontrado.
-                </div>
-              ) : (
-                dadosFiltrados.map((item) => (
-                  <div key={item.id} className="p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center px-2 py-0.5 bg-[#4180ab]/10 text-[#4180ab] text-xs font-bold rounded-md">
-                        #{item.id}
-                      </span>
-                      {podeEditar ? (
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => handleOpenModal(item)}
-                            className="p-2 text-blue-600 bg-blue-50 rounded-lg active:scale-95 transition-transform"
-                            title="Editar"
-                          >
-                            <Edit className="size-4" />
-                          </button>
-
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="p-2 text-red-600 bg-red-50 rounded-lg active:scale-95 transition-transform"
-                              title="Excluir"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-slate-300 text-[10px] italic">
-                          somente leitura
-                        </span>
-                      )}
-                    </div>
-
-                    <dl className="grid grid-cols-1 gap-1.5">
-                      {colunas.map((col) => (
-                        <div
-                          key={col}
-                          className="flex items-start justify-between gap-3 text-sm"
-                        >
-                          <dt className="text-slate-500 font-medium shrink-0 text-xs uppercase tracking-wide">
-                            {col.replace(/_/g, " ")}
-                          </dt>
-                          <dd className="text-slate-700 text-right break-words min-w-0">
-                            {item[col] || (
-                              <span className="text-slate-300 italic">
-                                vazio
-                              </span>
-                            )}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* === DESKTOP: Tabela === */}
+            {/* Desktop Tabela */}
             <div className="hidden md:block flex-1 overflow-auto">
               <table className="w-full text-left border-collapse min-w-200">
                 <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 shadow-sm">
                   <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
                       ID
                     </th>
                     {colunas.map((col) => (
                       <th
                         key={col}
-                        className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap"
+                        className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"
                       >
                         {col.replace(/_/g, " ")}
                       </th>
                     ))}
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
                       AÇÕES
                     </th>
                   </tr>
@@ -1116,8 +850,8 @@ export default function SystemInformation() {
                         colSpan={colunas.length + 2}
                         className="px-6 py-12 text-center text-slate-400"
                       >
-                        <RefreshCw className="size-6 animate-spin mx-auto mb-2 text-[#4180ab]" />
-                        Carregando registros...
+                        <RefreshCw className="size-6 animate-spin mx-auto mb-2 text-[#4180ab]" />{" "}
+                        Carregando...
                       </td>
                     </tr>
                   ) : dadosFiltrados.length === 0 ? (
@@ -1135,14 +869,13 @@ export default function SystemInformation() {
                         key={item.id}
                         className="hover:bg-slate-50/70 transition-colors group"
                       >
-                        <td className="px-6 py-4 text-sm font-semibold text-slate-700 whitespace-nowrap">
+                        <td className="px-6 py-4 text-sm font-semibold text-slate-700">
                           #{item.id}
                         </td>
                         {colunas.map((col) => (
                           <td
                             key={col}
                             className="px-6 py-4 text-sm text-slate-600 max-w-50 truncate"
-                            title={item[col]}
                           >
                             {item[col] || (
                               <span className="text-slate-300 italic">
@@ -1156,24 +889,21 @@ export default function SystemInformation() {
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => handleOpenModal(item)}
-                                className="p-1.5 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
-                                title="Editar"
+                                className="p-1.5 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
                               >
                                 <Edit className="size-4" />
                               </button>
-
                               {isAdmin && (
                                 <button
                                   onClick={() => handleDelete(item.id)}
-                                  className="p-1.5 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
-                                  title="Excluir"
+                                  className="p-1.5 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
                                 >
                                   <Trash2 className="size-4" />
                                 </button>
                               )}
                             </div>
                           ) : (
-                            <span className="text-slate-300 text-xs italic pr-2">
+                            <span className="text-slate-300 text-xs italic">
                               somente leitura
                             </span>
                           )}
@@ -1185,187 +915,212 @@ export default function SystemInformation() {
               </table>
             </div>
 
-            <div className="p-3 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 font-medium text-center md:text-left">
+            <div className="p-3 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 font-medium">
               Total de registros: {dadosFiltrados.length}
             </div>
           </div>
         </div>
       </main>
 
-      {/* Modal Import */}
-      {isImportModalOpen && (
+      {/* ✅ MODAL DO RELATÓRIO (MENSAL / ANUAL) */}
+      {isReportModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-md flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 max-h-[90vh]">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-md flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-5 border-b border-slate-100">
               <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                <FileUp className="size-5 text-emerald-600" />
-                Importar SINAN
+                <FileText className="size-5 text-indigo-600" /> Gerar Relatório
               </h3>
               <button
-                onClick={() => {
-                  setIsImportModalOpen(false);
-                  setUploadFile(null);
-                }}
-                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 hover:cursor-pointer p-1.5 rounded-full transition-colors"
+                onClick={() => setIsReportModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition-colors"
               >
-                <X className="size-5" />
+                <X className="size-5 cursor-pointer" />
               </button>
             </div>
 
-            <div className="p-5 sm:p-6 text-center overflow-y-auto">
-              <p className="text-sm text-slate-600 mb-5">
-                Selecione um arquivo <strong>.dbf</strong>,{" "}
-                <strong>.xls</strong> ou <strong>.xlsx</strong> para popular a
-                tabela{" "}
-                <strong className="text-[#4180ab]">{tabelaAtiva.nome}</strong>.
-              </p>
-
-              <label
-                htmlFor="dropzone-file"
-                className="flex flex-col items-center justify-center w-full h-36 sm:h-40 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
-              >
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-2 text-slate-400" />
-                  <p className="mb-1 text-sm text-slate-500 font-semibold">
-                    Clique para selecionar
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    DBF, XLS, XLSX ou CSV
-                  </p>
+            <form
+              onSubmit={handleDownloadReport}
+              className="p-5 sm:p-6 space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">
+                    Mês
+                  </label>
+                  <select
+                    value={reportData.mes}
+                    onChange={(e) =>
+                      setReportData({ ...reportData, mes: e.target.value })
+                    }
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                  >
+                    <option value="todos">Todos os Meses (Anual)</option>
+                    <option value={1}>Janeiro</option>
+                    <option value={2}>Fevereiro</option>
+                    <option value={3}>Março</option>
+                    <option value={4}>Abril</option>
+                    <option value={5}>Maio</option>
+                    <option value={6}>Junho</option>
+                    <option value={7}>Julho</option>
+                    <option value={8}>Agosto</option>
+                    <option value={9}>Setembro</option>
+                    <option value={10}>Outubro</option>
+                    <option value={11}>Novembro</option>
+                    <option value={12}>Dezembro</option>
+                  </select>
                 </div>
-                <input
-                  id="dropzone-file"
-                  type="file"
-                  className="hidden"
-                  accept=".dbf, .xls, .xlsx, .csv"
-                  onChange={(e) => setUploadFile(e.target.files[0])}
-                />
-              </label>
 
-              {uploadFile && (
-                <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg border border-emerald-100 truncate">
-                  {uploadFile.name}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">
+                    Ano
+                  </label>
+                  <input
+                    type="number"
+                    min="2020"
+                    max="2100"
+                    value={reportData.ano}
+                    onChange={(e) =>
+                      setReportData({
+                        ...reportData,
+                        ano: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  />
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="p-4 sm:p-5 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-slate-50/50 rounded-b-none sm:rounded-b-2xl">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsImportModalOpen(false);
-                  setUploadFile(null);
-                }}
-                className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleFileUpload}
-                disabled={isUploading || !uploadFile}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isUploading ? (
-                  <RefreshCw className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-                {isUploading ? "Processando..." : "Iniciar Importação"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              {/* DROPDOWN CUSTOMIZADO DE AGRAVO */}
+              <div className="space-y-1.5 pt-2" ref={agravoDropdownRef}>
+                <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">
+                  Agravo / Endemia
+                </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsAgravoDropdownOpen(!isAgravoDropdownOpen)
+                    }
+                    className={`flex items-center justify-between w-full bg-slate-50 border ${isAgravoDropdownOpen ? "border-indigo-500 ring-1 ring-indigo-500" : "border-slate-200"} text-slate-800 rounded-lg px-3 py-2.5 text-sm outline-none transition-all cursor-pointer`}
+                  >
+                    <span className="truncate">
+                      {reportData.agravo === "geral"
+                        ? "Panorama Geral (Todas as Doenças)"
+                        : reportData.agravo === "dengue"
+                          ? "Dengue"
+                          : reportData.agravo === "tuberculose"
+                            ? "Tuberculose"
+                            : reportData.agravo === "sifilis"
+                              ? "Sífilis"
+                              : reportData.agravo === "hanseniase"
+                                ? "Hanseníase"
+                                : reportData.agravo === "chagas"
+                                  ? "Chagas"
+                                  : reportData.agravo === "hepatite"
+                                    ? "Hepatite"
+                                    : reportData.agravo === "aids"
+                                      ? "AIDS Adulto"
+                                      : reportData.agravo === "violencia"
+                                        ? "Violência Doméstica"
+                                        : reportData.agravo ===
+                                            "animais_peconhentos"
+                                          ? "Animais Peçonhentos"
+                                          : reportData.agravo === "intoxicacao"
+                                            ? "Intoxicação"
+                                            : reportData.agravo ===
+                                                "leishmaniose"
+                                              ? "Leishmaniose"
+                                              : reportData.agravo}
+                    </span>
+                    <ChevronDown
+                      className={`size-4 text-slate-500 transition-transform duration-200 ${isAgravoDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
 
-      {/* Modal CRUD */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 shrink-0">
-              <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2 truncate pr-2">
-                {editingId ? (
-                  <Edit className="size-5 text-[#4180ab] shrink-0" />
-                ) : (
-                  <Plus className="size-5 text-[#4180ab] shrink-0" />
-                )}
-                <span className="truncate">
-                  {editingId ? "Editar Registro" : "Novo Registro"} —{" "}
-                  {tabelaAtiva.nome}
-                </span>
-              </h3>
-              <button
-                onClick={handleCloseModal}
-                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition-colors shrink-0"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
-              <form
-                id="recordForm"
-                onSubmit={handleSave}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-              >
-                {colunas.map((col) => {
-                  const label = col.replace(/_/g, " ").toUpperCase();
-                  const type =
-                    col.includes("data") || col.includes("dt")
-                      ? "date"
-                      : "text";
-                  return (
-                    <div key={col} className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-500 tracking-wide">
-                        {label}
-                      </label>
-                      <input
-                        type={type}
-                        name={col}
-                        value={formData[col] || ""}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-[#4180ab] focus:ring-1 focus:ring-[#4180ab] transition-all"
-                        placeholder={`Inserir ${label.toLowerCase()}...`}
-                      />
+                  {isAgravoDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100 max-h-60 overflow-y-auto custom-scrollbar">
+                      <div className="p-1">
+                        {[
+                          {
+                            id: "geral",
+                            nome: "Panorama Geral (Todas as Doenças)",
+                          },
+                          { id: "dengue", nome: "Dengue" },
+                          { id: "tuberculose", nome: "Tuberculose" },
+                          { id: "sifilis", nome: "Sífilis" },
+                          { id: "hanseniase", nome: "Hanseníase" },
+                          { id: "chagas", nome: "Chagas" },
+                          { id: "hepatite", nome: "Hepatite" },
+                          { id: "aids", nome: "AIDS Adulto" },
+                          { id: "violencia", nome: "Violência Doméstica" },
+                          {
+                            id: "animais_peconhentos",
+                            nome: "Animais Peçonhentos",
+                          },
+                          { id: "intoxicacao", nome: "Intoxicação" },
+                          { id: "leishmaniose", nome: "Leishmaniose" },
+                        ].map((opt) => {
+                          const isSelected = reportData.agravo === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setReportData({
+                                  ...reportData,
+                                  agravo: opt.id,
+                                });
+                                setIsAgravoDropdownOpen(false);
+                              }}
+                              className={`flex items-center justify-between w-full px-3 py-2 text-sm text-left rounded-lg transition-colors cursor-pointer ${isSelected ? "bg-indigo-50 text-indigo-700 font-bold" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"}`}
+                            >
+                              <span className="truncate">{opt.nome}</span>
+                              {isSelected && (
+                                <Check className="size-4 text-indigo-600" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
-              </form>
-            </div>
+                  )}
+                </div>
+              </div>
 
-            <div className="p-4 sm:p-5 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-slate-50/50 shrink-0">
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                form="recordForm"
-                disabled={loading}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[#4180ab] rounded-lg hover:bg-[#32678c] hover:cursor-pointer transition-colors disabled:opacity-70"
-              >
-                {loading ? (
-                  <RefreshCw className="size-4 animate-spin" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-                Salvar Dados
-              </button>
-            </div>
+              <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-800 leading-relaxed mt-2">
+                💡 O sistema vai compilar os dados consolidados do período
+                selecionado (Mensal ou Anual).
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsReportModalOpen(false)}
+                  className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isGeneratingReport}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isGeneratingReport ? (
+                    <RefreshCw className="size-4 animate-spin" />
+                  ) : (
+                    <Download className="size-4" />
+                  )}{" "}
+                  {isGeneratingReport ? "Gerando PDF..." : "Baixar PDF"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-      `,
+          __html: `.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }`,
         }}
       />
     </div>
