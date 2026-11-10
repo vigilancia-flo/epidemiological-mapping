@@ -8,6 +8,7 @@ import EndemiasFilterPrivate from "../../components/private/EndemiasFilterPrivat
 import ButtonTheme from "../../components/ButtonTheme.jsx";
 import { Button } from "@/components/button.jsx";
 import MapPeriodFilter from "@/components/MapPeriodFilter.jsx";
+import { useFiltrosMapa } from "@/hooks/useFiltrosMapa.js";
 import {
   Map,
   MapGeoJSON,
@@ -1935,6 +1936,15 @@ const marcadores = [
 ];
 
 export default function MapDengue({ isPrivateView = false }) {
+  const {
+    filtroTipo: filtroPeriodo,
+    setFiltroTipo: setFiltroPeriodo,
+    dataInicio,
+    setDataInicio,
+    dataFim,
+    setDataFim,
+  } = useFiltrosMapa();
+
   const mapRef = useRef(null);
   const [activeStyle, setActiveStyle] = useState("light");
   const [geoData, setGeoData] = useState(bairrosFlorianoGeoJSON);
@@ -1946,10 +1956,6 @@ export default function MapDengue({ isPrivateView = false }) {
 
   const [todosPacientes, setTodosPacientes] = useState([]);
   const endemiaAtual = "dengue";
-
-  const [filtroPeriodo, setFiltroPeriodo] = useState("todos");
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
 
   const handleEndemiaChange = (novaEndemia) => {
     if (novaEndemia === endemiaAtual) return;
