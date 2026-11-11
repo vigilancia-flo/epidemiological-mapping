@@ -54,10 +54,6 @@ const FEATURES = [
 const INPUT_CLASS =
   "w-full rounded-xl border border-slate-200/80 bg-slate-50/80 py-3 pl-11 pr-3 text-sm font-semibold text-[#054060] outline-none transition-all placeholder:font-medium placeholder:text-slate-400 hover:border-slate-300 hover:bg-slate-50 focus:border-[#054060]/40 focus:bg-white focus:ring-4 focus:ring-[#054060]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
-/* -------------------------------------------------------------------------- */
-/*                              Componentes auxiliares                        */
-/* -------------------------------------------------------------------------- */
-
 function FeatureCard({
   icon: Icon,
   title,
@@ -134,7 +130,7 @@ function SplashLoader({ isFadingOut }) {
           <img
             src={EpiDataLogo}
             alt="EPI-DATA"
-            className="relative w-32 drop-shadow-lg animate-splash-breathe sm:w-40"
+            className="relative w-32 drop-shadow-lg animate-splash-breathe sm:w-40 select-none"
           />
         </div>
 
@@ -179,10 +175,6 @@ function SplashLoader({ isFadingOut }) {
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                   Página                                   */
-/* -------------------------------------------------------------------------- */
 
 function Home() {
   const navigate = useNavigate();
@@ -321,7 +313,7 @@ function Home() {
               abrangência das UBSs em tempo real para tomada rápida de decisões.
             </p>
 
-            <div className="mt-10 space-y-4 sm:mt-12 sm:space-y-5">
+            <div className="mt-10 space-y-4 sm:mt-12 sm:space-y-5 select-none">
               {FEATURES.map((feature) => (
                 <FeatureCard key={feature.title} {...feature} />
               ))}
