@@ -240,14 +240,14 @@ export default function SystemInformation() {
   const [mensagem, setMensagem] = useState({ texto: "", tipo: "" });
   const [isDocOpen, setIsDocOpen] = useState(false);
 
-  // Estados do Relatório (Agora com valor inicial "todos" para o mês)
+  // Estados do Relatório
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isAgravoDropdownOpen, setIsAgravoDropdownOpen] = useState(false);
   const agravoDropdownRef = useRef(null);
 
   const [reportData, setReportData] = useState({
-    mes: "todos", // "todos" ou número do mês
+    mes: "todos",
     ano: new Date().getFullYear(),
     agravo: "geral",
   });
@@ -481,8 +481,6 @@ export default function SystemInformation() {
 
     try {
       const { mes, ano, agravo } = reportData;
-
-      // Se o mês for 'todos', não envia o parâmetro. Se for numérico, envia.
       const mesParam = mes !== "todos" ? `&mes=${mes}` : "";
       const url = `${baseUrl}/api/relatorios/mensal/?ano=${ano}&agravo=${agravo}${mesParam}`;
 
@@ -922,6 +920,165 @@ export default function SystemInformation() {
         </div>
       </main>
 
+      {/* Modal Import */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-md flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                <FileUp className="size-5 text-emerald-600" /> Importar SINAN
+              </h3>
+              <button
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setUploadFile(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 hover:cursor-pointer p-1.5 rounded-full transition-colors"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-5 sm:p-6 text-center overflow-y-auto">
+              <p className="text-sm text-slate-600 mb-5">
+                Selecione um arquivo <strong>.dbf</strong>,{" "}
+                <strong>.xls</strong> ou <strong>.xlsx</strong> para popular a
+                tabela{" "}
+                <strong className="text-[#4180ab]">{tabelaAtiva.nome}</strong>.
+              </p>
+              <label
+                htmlFor="dropzone-file"
+                className="flex flex-col items-center justify-center w-full h-36 sm:h-40 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="w-8 h-8 mb-2 text-slate-400" />
+                  <p className="mb-1 text-sm text-slate-500 font-semibold">
+                    Clique para selecionar
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    DBF, XLS, XLSX ou CSV
+                  </p>
+                </div>
+                <input
+                  id="dropzone-file"
+                  type="file"
+                  className="hidden"
+                  accept=".dbf, .xls, .xlsx, .csv"
+                  onChange={(e) => setUploadFile(e.target.files[0])}
+                />
+              </label>
+              {uploadFile && (
+                <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg border border-emerald-100 truncate">
+                  {uploadFile.name}
+                </div>
+              )}
+            </div>
+            <div className="p-4 sm:p-5 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-slate-50/50 rounded-b-none sm:rounded-b-2xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setUploadFile(null);
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleFileUpload}
+                disabled={isUploading || !uploadFile}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isUploading ? (
+                  <RefreshCw className="size-4 animate-spin" />
+                ) : (
+                  <Save className="size-4" />
+                )}{" "}
+                {isUploading ? "Processando..." : "Iniciar Importação"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal CRUD */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-xl w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 shrink-0">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2 truncate pr-2">
+                {editingId ? (
+                  <Edit className="size-5 text-[#4180ab] shrink-0" />
+                ) : (
+                  <Plus className="size-5 text-[#4180ab] shrink-0" />
+                )}
+                <span className="truncate">
+                  {editingId ? "Editar Registro" : "Novo Registro"} —{" "}
+                  {tabelaAtiva.nome}
+                </span>
+              </h3>
+              <button
+                onClick={handleCloseModal}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-full transition-colors shrink-0"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
+              <form
+                id="recordForm"
+                onSubmit={handleSave}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+              >
+                {colunas.map((col) => {
+                  const label = col.replace(/_/g, " ").toUpperCase();
+                  const type =
+                    col.includes("data") || col.includes("dt")
+                      ? "date"
+                      : "text";
+                  return (
+                    <div key={col} className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 tracking-wide">
+                        {label}
+                      </label>
+                      <input
+                        type={type}
+                        name={col}
+                        value={formData[col] || ""}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-[#4180ab] focus:ring-1 focus:ring-[#4180ab] transition-all"
+                        placeholder={`Inserir ${label.toLowerCase()}...`}
+                      />
+                    </div>
+                  );
+                })}
+              </form>
+            </div>
+            <div className="p-4 sm:p-5 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-slate-50/50 shrink-0">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                form="recordForm"
+                disabled={loading}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[#4180ab] rounded-lg hover:bg-[#32678c] hover:cursor-pointer transition-colors disabled:opacity-70"
+              >
+                {loading ? (
+                  <RefreshCw className="size-4 animate-spin" />
+                ) : (
+                  <Save className="size-4" />
+                )}{" "}
+                Salvar Dados
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ✅ MODAL DO RELATÓRIO (MENSAL / ANUAL) */}
       {isReportModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -937,7 +1094,6 @@ export default function SystemInformation() {
                 <X className="size-5 cursor-pointer" />
               </button>
             </div>
-
             <form
               onSubmit={handleDownloadReport}
               className="p-5 sm:p-6 space-y-4"
@@ -969,7 +1125,6 @@ export default function SystemInformation() {
                     <option value={12}>Dezembro</option>
                   </select>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">
                     Ano
@@ -990,7 +1145,6 @@ export default function SystemInformation() {
                 </div>
               </div>
 
-              {/* DROPDOWN CUSTOMIZADO DE AGRAVO */}
               <div className="space-y-1.5 pt-2" ref={agravoDropdownRef}>
                 <label className="text-xs font-bold text-slate-500 tracking-wide uppercase">
                   Agravo / Endemia
@@ -1036,7 +1190,6 @@ export default function SystemInformation() {
                       className={`size-4 text-slate-500 transition-transform duration-200 ${isAgravoDropdownOpen ? "rotate-180" : ""}`}
                     />
                   </button>
-
                   {isAgravoDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100 max-h-60 overflow-y-auto custom-scrollbar">
                       <div className="p-1">
@@ -1086,12 +1239,10 @@ export default function SystemInformation() {
                   )}
                 </div>
               </div>
-
               <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-800 leading-relaxed mt-2">
                 💡 O sistema vai compilar os dados consolidados do período
                 selecionado (Mensal ou Anual).
               </div>
-
               <div className="pt-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
                 <button
                   type="button"

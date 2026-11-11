@@ -32,6 +32,7 @@ import ComparativoMensal from "@/components/ComparativoMensal.jsx";
 import TabelaCasos from "@/components/TabelaCasos.jsx";
 import { useAuth } from "@/contexts/AuthContext.jsx";
 import UserProfileMenu from "@/components/Modal/UserProfileMenu.jsx";
+import CalendarioEpidemiologico from "@/components/CalendarioEpidemiologico.jsx";
 import DashboardSifilis from "./DashboardSifilis.jsx";
 import DashboardTuberculose from "./DashBoardTuberculose.jsx";
 import DashboardChagas from "./DashBoardChagas.jsx";
@@ -769,7 +770,7 @@ export default function Dashboard({ isPrivateView = false }) {
         />
       )}
       <div className="flex-1 flex flex-col h-full w-full overflow-y-auto overflow-x-hidden ml-0 md:ml-[var(--sidebar-width,16rem)] transition-all duration-300">
-        <header className="px-3 sm:px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-gradient-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10 transition-all duration-300">
+        <header className="px-3 sm:px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-linear-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10 transition-all duration-300">
           <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -964,7 +965,14 @@ export default function Dashboard({ isPrivateView = false }) {
                     />
                   </div>
 
-                  {/* 🆕 Linhas extras para UBS e Admin */}
+                  <CalendarioEpidemiologico
+                    pacientes={pacientesFiltrados}
+                    endemiaNome={endemiaSelecionada.nome}
+                    filtroTipo={filtroTipo}
+                    dataInicio={dataInicio}
+                    dataFim={dataFim}
+                  />
+
                   {showExtraCharts && (
                     <>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
