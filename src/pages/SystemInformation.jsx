@@ -180,6 +180,7 @@ const getToken = () =>
   localStorage.getItem("token") ||
   sessionStorage.getItem("access_token") ||
   null;
+
 const getAuthHeaders = (extraHeaders = {}) => {
   const token = getToken();
   return {
@@ -187,6 +188,7 @@ const getAuthHeaders = (extraHeaders = {}) => {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
+
 const handleAuthError = (status) => {
   if (status === 401) {
     localStorage.clear();
@@ -196,6 +198,7 @@ const handleAuthError = (status) => {
   }
   return false;
 };
+
 const isAdminUser = () => {
   try {
     const token =
@@ -820,7 +823,75 @@ export default function SystemInformation() {
               </div>
             </div>
 
-            {/* Desktop Tabela */}
+            {/* === MOBILE: Layout de Textos (Cards) === */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {loading && dados.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-sm">
+                  <RefreshCw className="size-6 animate-spin mx-auto mb-2 text-[#4180ab]" />
+                  Carregando registros...
+                </div>
+              ) : dadosFiltrados.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 font-medium text-sm">
+                  Nenhum registro encontrado.
+                </div>
+              ) : (
+                dadosFiltrados.map((item) => (
+                  <div key={item.id} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 bg-[#4180ab]/10 text-[#4180ab] text-xs font-bold rounded-md">
+                        #{item.id}
+                      </span>
+                      {podeEditar ? (
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handleOpenModal(item)}
+                            className="p-2 text-blue-600 bg-blue-50 rounded-lg active:scale-95 transition-transform"
+                            title="Editar"
+                          >
+                            <Edit className="size-4" />
+                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="p-2 text-red-600 bg-red-50 rounded-lg active:scale-95 transition-transform"
+                              title="Excluir"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300 text-[10px] italic">
+                          somente leitura
+                        </span>
+                      )}
+                    </div>
+
+                    <dl className="grid grid-cols-1 gap-1.5">
+                      {colunas.map((col) => (
+                        <div
+                          key={col}
+                          className="flex items-start justify-between gap-3 text-sm"
+                        >
+                          <dt className="text-slate-500 font-medium shrink-0 text-xs uppercase tracking-wide">
+                            {col.replace(/_/g, " ")}
+                          </dt>
+                          <dd className="text-slate-700 text-right break-words min-w-0">
+                            {item[col] || (
+                              <span className="text-slate-300 italic">
+                                vazio
+                              </span>
+                            )}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* === DESKTOP: Tabela === */}
             <div className="hidden md:block flex-1 overflow-auto">
               <table className="w-full text-left border-collapse min-w-200">
                 <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 shadow-sm">
@@ -831,7 +902,7 @@ export default function SystemInformation() {
                     {colunas.map((col) => (
                       <th
                         key={col}
-                        className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider"
+                        className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap"
                       >
                         {col.replace(/_/g, " ")}
                       </th>
