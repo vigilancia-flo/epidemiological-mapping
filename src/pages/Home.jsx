@@ -496,7 +496,7 @@ function Home() {
               </form>
             </section>
 
-            <footer className="border-t border-slate-200/70 pt-6 text-center lg:text-left">
+            <footer className="border-t border-slate-200/70 pt-6 text-center lg:text-left md:mb-[-100px]">
               <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:text-[11px]">
                 Secretaria de Saúde.
               </p>

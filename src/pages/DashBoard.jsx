@@ -2,6 +2,8 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import Sidebar from "../components/Sidebar.jsx";
 import SidebarPrivate from "@/components/private/SidebarPrivate.jsx";
 import { Helmet } from "react-helmet-async";
+import { Share2 } from "lucide-react";
+import { useDashboardShare } from "../hooks/useDashboardShare.js";
 import {
   Users,
   Activity,
@@ -284,6 +286,18 @@ export default function Dashboard({ isPrivateView = false }) {
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
+
+  const { copiarLink, copiado } = useDashboardShare({
+    endemiasDisponiveis,
+    endemiaSelecionada,
+    setEndemiaSelecionada,
+    filtroTipo,
+    setFiltroTipo,
+    dataInicio,
+    setDataInicio,
+    dataFim,
+    setDataFim,
+  });
 
   const [isPeriodoDropdownOpen, setIsPeriodoDropdownOpen] = useState(false);
   const periodoDropdownRef = useRef(null);
@@ -803,10 +817,38 @@ export default function Dashboard({ isPrivateView = false }) {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="flex flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={copiarLink}
+                  title="Compartilhar link com os filtros atuais"
+                  className={`group flex items-center justify-center gap-2 p-2.5 sm:px-3 sm:py-3 rounded-xl border transition-all duration-300 cursor-pointer shrink-0 ${
+                    copiado
+                      ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                      : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 shadow-sm hover:shadow"
+                  }`}
+                >
+                  {copiado ? (
+                    <>
+                      <Check className="size-5 text-emerald-600" />
+                      <span className="hidden sm:inline text-xs sm:text-sm font-semibold text-emerald-700">
+                        Link copiado!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="size-5 text-slate-500 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="hidden sm:inline text-xs sm:text-sm font-semibold">
+                        Compartilhar
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {/* 📅 Dropdown de Período */}
                 <div
-                  className="relative w-full sm:w-auto min-w-50"
+                  className="relative flex-1 sm:flex-none sm:w-auto min-w-0 sm:min-w-50"
                   ref={periodoDropdownRef}
                 >
                   <button
@@ -821,7 +863,6 @@ export default function Dashboard({ isPrivateView = false }) {
                     } text-slate-700 rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 outline-none shadow-sm transition-all hover:shadow cursor-pointer`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      {/* Ícone de calendário um pouco mais escuro */}
                       <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 shrink-0" />
                       <span className="text-sm font-medium truncate text-slate-700">
                         {PERIODO_OPTIONS.find((opt) => opt.value === filtroTipo)
@@ -868,34 +909,38 @@ export default function Dashboard({ isPrivateView = false }) {
                     </div>
                   )}
                 </div>
-
-                {filtroTipo === "personalizado" && (
-                  <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200 bg-white border border-slate-200 p-1 rounded-lg shadow-sm">
-                    <input
-                      type="date"
-                      value={dataInicio}
-                      onChange={(e) => setDataInicio(e.target.value)}
-                      className="text-sm text-slate-700 bg-transparent rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#4180ab]/50 hover:bg-slate-50 cursor-pointer"
-                    />
-                    <span className="text-slate-300 font-medium text-sm">
-                      até
-                    </span>
-                    <input
-                      type="date"
-                      value={dataFim}
-                      onChange={(e) => setDataFim(e.target.value)}
-                      className="text-sm text-slate-700 bg-transparent rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#4180ab]/50 hover:bg-slate-50 cursor-pointer"
-                    />
-                  </div>
-                )}
               </div>
 
-              <EndemiaSelector
-                options={endemiasDisponiveis}
-                value={endemiaSelecionada}
-                onChange={setEndemiaSelecionada}
-                className={"cursor-pointer bg-amber-400"}
-              />
+              {/* 📆 Datas personalizadas */}
+              {filtroTipo === "personalizado" && (
+                <div className="flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-200 bg-white border border-slate-200 p-1 rounded-lg shadow-sm w-full sm:w-auto">
+                  <input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                    className="text-sm text-slate-700 bg-transparent rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#4180ab]/50 hover:bg-slate-50 cursor-pointer"
+                  />
+                  <span className="text-slate-300 font-medium text-sm">
+                    até
+                  </span>
+                  <input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                    className="text-sm text-slate-700 bg-transparent rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#4180ab]/50 hover:bg-slate-50 cursor-pointer"
+                  />
+                </div>
+              )}
+
+              {/* 🦠 Seletor de Endemia */}
+              <div className="w-full sm:w-auto">
+                <EndemiaSelector
+                  options={endemiasDisponiveis}
+                  value={endemiaSelecionada}
+                  onChange={setEndemiaSelecionada}
+                  className={"cursor-pointer bg-amber-400"}
+                />
+              </div>
             </div>
           </div>
 
