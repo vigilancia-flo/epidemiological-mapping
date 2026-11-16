@@ -15,47 +15,87 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- 🆕 Container fixo que vai segurar o VLibras -->
+    <div
+      id="vlibras-anchor"
+      style="
+        position: fixed;
+        top: 50%;
+        right: 23px;
+        transform: translateY(-170%);
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+        pointer-events: none;
+      "
+    ></div>
+
     <script type="module" src="/src/main.jsx"></script>
 
     <script>
       (() => {
         const MOBILE_BREAKPOINT = "(max-width: 767px)";
-
         const isMobile = window.matchMedia(MOBILE_BREAKPOINT).matches;
         if (isMobile) return;
 
+        // UserWay
         const userwayScript = document.createElement("script");
         userwayScript.src = "https://cdn.userway.org/widget.js";
         userwayScript.setAttribute("data-account", "ZGKiuLM2Nr");
         document.body.appendChild(userwayScript);
 
-        const positionVlibrasButton = () => {
-          const wrapper = document.getElementById("vlibras-access-wrapper");
-          const accessButton =
-            wrapper?.shadowRoot?.getElementById("vlibras-access");
-
-          if (!accessButton) return false;
-
-          accessButton.style.setProperty(
-            "top",
-            "calc(50vh - 70px)",
-            "important",
-          );
-          accessButton.style.setProperty("right", "13px", "important");
-          return true;
-        };
-
+        // VLibras
         const vlibrasScript = document.createElement("script");
         vlibrasScript.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
         vlibrasScript.async = true;
         vlibrasScript.onload = () => {
-          if (!positionVlibrasButton()) {
-            const observer = new MutationObserver(() => {
-              if (positionVlibrasButton()) observer.disconnect();
-            });
+          // Fica observando quando o VLibras for injetado no DOM
+          const observer = new MutationObserver(() => {
+            const wrapper = document.getElementById("vlibras-access-wrapper");
+            const anchor = document.getElementById("vlibras-anchor");
 
-            observer.observe(document.body, { childList: true });
-          }
+            if (wrapper && anchor) {
+              if (wrapper.parentNode !== anchor) {
+                anchor.appendChild(wrapper);
+              }
+
+              wrapper.style.setProperty("position", "relative", "important");
+              wrapper.style.setProperty("top", "auto", "important");
+              wrapper.style.setProperty("bottom", "auto", "important");
+              wrapper.style.setProperty("left", "auto", "important");
+              wrapper.style.setProperty("right", "auto", "important");
+              wrapper.style.setProperty("transform", "none", "important");
+              wrapper.style.setProperty("margin", "0", "important");
+              wrapper.style.setProperty("pointer-events", "auto", "important");
+
+              const accessButton =
+                wrapper.shadowRoot?.getElementById("vlibras-access");
+              if (accessButton) {
+                accessButton.style.setProperty(
+                  "position",
+                  "relative",
+                  "important",
+                );
+                accessButton.style.setProperty("top", "auto", "important");
+                accessButton.style.setProperty("bottom", "auto", "important");
+                accessButton.style.setProperty("left", "auto", "important");
+                accessButton.style.setProperty("right", "auto", "important");
+                accessButton.style.setProperty(
+                  "transform",
+                  "none",
+                  "important",
+                );
+                accessButton.style.setProperty("margin", "0", "important");
+              }
+
+              observer.disconnect();
+            }
+          });
+
+          observer.observe(document.body, { childList: true, subtree: true });
         };
         document.body.appendChild(vlibrasScript);
       })();
