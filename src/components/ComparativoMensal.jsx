@@ -91,7 +91,7 @@ export default function ComparativoMensal({
     <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_-8px_rgba(15,23,42,0.12)] transition-shadow duration-300 p-5 md:p-6 flex flex-col w-full overflow-hidden">
       <div className="mb-5 flex items-start gap-3">
         <div className="p-2 rounded-xl bg-[#4180ab]/10 text-[#4180ab]">
-          <TrendingUp className="size-4" strokeWidth={2.2} />
+          <TrendingUp className="size-4" strokeWidth={2.2} aria-hidden="true" />
         </div>
         <div>
           <h3 className="text-base font-bold text-slate-800 tracking-tight">
@@ -113,7 +113,11 @@ export default function ComparativoMensal({
           <p className="text-[10px] text-slate-400 font-medium">casos</p>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-3">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-slate-400 to-slate-300 transition-all duration-700 ease-out"
+              aria-valuenow={casosMesAnterior}
+              aria-valuemin={0}
+              aria-valuemax={maxValor}
+              aria-label={`Casos em ${nomeMesAnterior}: ${casosMesAnterior}`}
+              className="h-full rounded-full bg-linear-to-r from-slate-400 to-slate-300 transition-all duration-700 ease-out"
               style={{ width: `${pctAnterior}%` }}
             />
           </div>
@@ -130,6 +134,10 @@ export default function ComparativoMensal({
           <p className="text-[10px] text-slate-400 font-medium">casos</p>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-3">
             <div
+              aria-valuenow={casosMesAnterior}
+              aria-valuemin={0}
+              aria-valuemax={maxValor}
+              aria-label={`Casos em ${nomeMesAnterior}: ${casosMesAnterior}`}
               className="h-full rounded-full bg-gradient-to-r from-[#4180ab] to-[#5b9bc4] transition-all duration-700 ease-out"
               style={{ width: `${pctAtual}%` }}
             />

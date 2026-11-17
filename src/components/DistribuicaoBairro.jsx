@@ -21,7 +21,7 @@ export default function DistribuicaoBairro({ distribuicaoBairros = [] }) {
     <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_-8px_rgba(15,23,42,0.12)] transition-shadow duration-300 p-5 md:p-6 flex flex-col w-full overflow-hidden">
       <div className="mb-5 flex items-start gap-3">
         <div className="p-2 rounded-xl bg-[#4180ab]/10 text-[#4180ab]">
-          <MapPin className="size-4" strokeWidth={2.2} />
+          <MapPin className="size-4" strokeWidth={2.2} aria-hidden="true" />
         </div>
         <div>
           <h3 className="text-base font-bold text-slate-800 tracking-tight">
@@ -65,7 +65,10 @@ export default function DistribuicaoBairro({ distribuicaoBairros = [] }) {
                     />
                     <span className="truncate">{item.name}</span>
                     {isTop && (
-                      <span className="text-[9px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded shrink-0">
+                      <span
+                        className="text-[9px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded shrink-0"
+                        aria-label="Maior Incidência"
+                      >
                         TOP
                       </span>
                     )}
@@ -81,6 +84,11 @@ export default function DistribuicaoBairro({ distribuicaoBairros = [] }) {
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                   <div
+                    role="progressbar"
+                    aria-valuenow={item.value}
+                    aria-valuemin={0}
+                    aria-valuemax={item.max}
+                    aria-label={`${item.name}: ${item.value} casos (${porcentagem}% do total)`}
                     className={`h-full rounded-full ${getGradiente(item.color)} transition-all duration-1000 ease-out`}
                     style={{
                       width: `${Math.max((item.value / item.max) * 100, 4)}%`,

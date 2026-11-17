@@ -50,7 +50,7 @@ export default function CasosRecentes({ casos = [], onSelectPaciente }) {
           </p>
         </div>
         <div className="p-2 bg-slate-50 rounded-xl">
-          <Clock className="size-4 text-slate-500" />
+          <Clock className="size-4 text-slate-500" aria-hidden="true" />
         </div>
       </div>
 
@@ -58,7 +58,11 @@ export default function CasosRecentes({ casos = [], onSelectPaciente }) {
         {casos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-8 text-center">
             <div className="size-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
-              <Inbox className="size-6 text-slate-300" strokeWidth={1.5} />
+              <Inbox
+                className="size-6 text-slate-300"
+                strokeWidth={1.5}
+                aria-hidden="true"
+              />
             </div>
             <p className="text-sm font-semibold text-slate-600">
               Nenhum caso recente
@@ -79,6 +83,7 @@ export default function CasosRecentes({ casos = [], onSelectPaciente }) {
                 key={idx}
                 type="button"
                 onClick={() => onSelectPaciente?.(caso.dadosOriginais)}
+                aria-label={`Ver detalhes do caso de ${caso.name}. Classificação: ${style.label}. Doença: ${caso.condition}. Unidade: ${caso.ubs}. Registrado ${tempo}.`}
                 className="group flex items-center justify-between p-3 rounded-xl bg-slate-50/60 hover:bg-white text-left transition-all duration-200 border border-transparent hover:border-slate-200 hover:shadow-sm cursor-pointer"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -114,7 +119,10 @@ export default function CasosRecentes({ casos = [], onSelectPaciente }) {
                     </div>
                   </div>
                 </div>
-                <ArrowRight className="size-4 text-slate-300 group-hover:text-[#4180ab] group-hover:translate-x-1 transition-all duration-200 shrink-0 ml-2" />
+                <ArrowRight
+                  className="size-4 text-slate-300 group-hover:text-[#4180ab] group-hover:translate-x-1 transition-all duration-200 shrink-0 ml-2"
+                  aria-hidden="true"
+                />
               </button>
             );
           })

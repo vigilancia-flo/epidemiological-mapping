@@ -13,7 +13,7 @@ const formatLocalDate = (d) => {
 export default function CalendarioEpidemiologico({
   pacientes = [],
   endemiaNome = "",
-  filtroTipo = "todos", // 👈 Novas props vindas do Dashboard
+  filtroTipo = "todos",
   dataInicio = "",
   dataFim = "",
 }) {
@@ -132,7 +132,10 @@ export default function CalendarioEpidemiologico({
     return (
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 md:p-6">
         <div className="flex items-start gap-3 mb-4">
-          <div className="p-2 rounded-xl bg-[#4180ab]/10 text-[#4180ab]">
+          <div
+            className="p-2 rounded-xl bg-[#4180ab]/10 text-[#4180ab]"
+            aria-hidden="true"
+          >
             <CalendarDays className="size-4" />
           </div>
           <div>
@@ -182,8 +185,12 @@ export default function CalendarioEpidemiologico({
           </div>
         </div>
         {diaMaisAtivo.count > 0 && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-full shrink-0">
-            <TrendingUp className="size-3.5 text-rose-600" />
+          <div
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-full shrink-0"
+            role="status"
+            aria-label={`Pico de casos: ${diaMaisAtivo.count} notificações no dia ${diaMaisAtivo.date.split("-").reverse().join("/")}`}
+          >
+            <TrendingUp className="size-3.5 text-rose-600" aria-hidden="true" />
             <span className="text-[11px] font-semibold text-rose-700">
               Pico: {diaMaisAtivo.count} em{" "}
               {diaMaisAtivo.date.split("-").reverse().join("/")}
@@ -192,7 +199,11 @@ export default function CalendarioEpidemiologico({
         )}
       </div>
 
-      <div className="overflow-x-auto pb-1">
+      <div
+        className="overflow-x-auto pb-1"
+        role="img"
+        aria-label={`Calendário epidemiológico de ${endemiaNome}. Total de ${totalCasos} casos em ${diasComCasos} dias no período selecionado.`}
+      >
         <ActivityCalendar
           data={dados}
           theme={{
