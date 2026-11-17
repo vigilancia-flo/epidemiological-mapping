@@ -1008,23 +1008,45 @@ export default function SystemInformation() {
               </button>
             </div>
             <div className="p-5 sm:p-6 text-center overflow-y-auto">
-              <p className="text-sm text-slate-600 mb-5">
-                Selecione um arquivo <strong>.dbf</strong>,{" "}
-                <strong>.xls</strong> ou <strong>.xlsx</strong> para popular a
-                tabela{" "}
-                <strong className="text-[#4180ab]">{tabelaAtiva.nome}</strong>.
+              {/* ✅ NOVO BLOCO: Deixa explícito para o usuário qual é a tabela de destino */}
+              <div className="mb-5 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center gap-2">
+                <Database className="size-5 text-blue-600 shrink-0" />
+                <p className="text-sm text-blue-800 font-medium">
+                  Importando para a tabela: <br className="sm:hidden" />
+                  <strong className="text-blue-900 bg-blue-200/50 px-2 py-0.5 rounded-md ml-1">
+                    {tabelaAtiva.nome}
+                  </strong>
+                </p>
+              </div>
+
+              <p className="text-sm text-slate-600 mb-5 text-balance">
+                Selecione o arquivo do SINAN. O sistema lerá os dados e os
+                inserirá na tabela selecionada acima.
               </p>
+
               <label
                 htmlFor="dropzone-file"
-                className="flex flex-col items-center justify-center w-full h-36 sm:h-40 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
+                className={`flex flex-col items-center justify-center w-full h-36 sm:h-40 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                  uploadFile
+                    ? "border-emerald-400 bg-emerald-50/50"
+                    : "border-slate-300 bg-slate-50 hover:bg-slate-100"
+                }`}
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-2 text-slate-400" />
+                  {uploadFile ? (
+                    <CheckCircle2 className="w-8 h-8 mb-2 text-emerald-500" />
+                  ) : (
+                    <Upload className="w-8 h-8 mb-2 text-slate-400" />
+                  )}
                   <p className="mb-1 text-sm text-slate-500 font-semibold">
-                    Clique para selecionar
+                    {uploadFile
+                      ? "Arquivo selecionado"
+                      : "Clique para selecionar"}
                   </p>
                   <p className="text-xs text-slate-400">
-                    DBF, XLS, XLSX ou CSV
+                    {uploadFile
+                      ? uploadFile.name
+                      : "Formatos: DBF, XLS, XLSX ou CSV"}
                   </p>
                 </div>
                 <input
@@ -1035,12 +1057,25 @@ export default function SystemInformation() {
                   onChange={(e) => setUploadFile(e.target.files[0])}
                 />
               </label>
-              {uploadFile && (
-                <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg border border-emerald-100 truncate">
-                  {uploadFile.name}
-                </div>
-              )}
+
+              {/* Mensagem de erro/alerta caso o usuário selecione um arquivo com nome estranho */}
+              {uploadFile &&
+                !REGRAS_NOMENCLATURA.some((regra) =>
+                  uploadFile.name.toLowerCase().includes(regra.prefixo),
+                ) && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-left">
+                    <AlertCircle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-800">
+                      <strong>Atenção:</strong> O nome deste arquivo não segue o
+                      padrão SINAN (ex: <code>deng26.dbf</code>). Como você já
+                      selecionou a tabela <strong>{tabelaAtiva.nome}</strong>,
+                      os dados serão importados nela, mas verifique se o arquivo
+                      está correto.
+                    </p>
+                  </div>
+                )}
             </div>
+
             <div className="p-4 sm:p-5 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 bg-slate-50/50 rounded-b-none sm:rounded-b-2xl">
               <button
                 type="button"
