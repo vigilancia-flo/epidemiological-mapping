@@ -8,6 +8,7 @@ import {
   X,
   ChevronsLeft,
   Globe,
+  Megaphone,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -22,6 +23,12 @@ const NAV_ITEMS = [
     icon: Map,
     label: "Mapa Epidemiológico",
     desc: "Visualização geográfica",
+  },
+  {
+    path: "/mural",
+    icon: Megaphone,
+    label: "Canal de Comunicação",
+    desc: "Mural epidemiológico",
   },
   {
     path: "/suporte",

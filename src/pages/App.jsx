@@ -21,6 +21,7 @@ import NotFound from "./NotFound.jsx";
 import ProtectedRoute from "@/utils/ProtectedRoute.jsx";
 import CoberturaVacinal from "./CoberturaVacinal.jsx";
 import AboutDeveloper from "../components/Modal/AboutDeveloper.jsx";
+import CommunicationChannel from "./CommunicationChannel.jsx";
 
 function App() {
   return (
@@ -71,6 +72,10 @@ function App() {
             <Route
               path="/desenvolvedor"
               element={<AboutDeveloper isPrivateView={false} />}
+            />
+            <Route
+              path="/mural"
+              element={<CommunicationChannel isPrivateView={false} />}
             />
             <Route path="*" element={<NotFound />} />
 
@@ -137,6 +142,10 @@ function App() {
                 path="profissional/desenvolvedor"
                 element={<AboutDeveloper />}
                 isPrivateView={true}
+              />
+              <Route
+                path="profissional/mural"
+                element={<CommunicationChannel isPrivateView={true} />}
               />
             </Route>
           </Routes>
