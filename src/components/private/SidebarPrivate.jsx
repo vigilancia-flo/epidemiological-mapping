@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   Syringe,
   ChevronsLeft,
+  Megaphone,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -30,6 +31,12 @@ const NAV_ITEMS = [
     icon: Syringe,
     label: "Cobertura Vacinal",
     desc: "Imunização infantil",
+  },
+  {
+    path: "/profissional/mural",
+    icon: Megaphone,
+    label: "Canal de Comunicação",
+    desc: "Mural epidemiológico",
   },
   {
     path: "/profissional/informacoes-sistema",
