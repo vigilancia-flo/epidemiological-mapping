@@ -200,7 +200,7 @@ export default function CommunicationChannel({ isPrivateView = false }) {
               Vigilância Epidemiológica.
             </p>
             <a
-              href="https://chat.whatsapp.com/GdTG5slUt5SJGspYQm18OT"
+              href="https://whatsapp.com/channel/0029Vb9PV8gDeON9oUd0uF2o"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 mt-5 px-6 py-2.5 bg-[#25D366] hover:bg-[#1DA851] text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
