@@ -13,7 +13,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["Logov1.png"], // Nome da sua logo
+      includeAssets: ["Logov1.png"],
       manifest: {
         name: "SIGEP",
         short_name: "SIGEP",
@@ -23,7 +23,7 @@ export default defineConfig({
         display: "standalone",
         icons: [
           {
-            src: "Logov1.png", // Certifique-se que essa imagem está na pasta public
+            src: "Logov1.png",
             sizes: "192x192",
             type: "image/png",
           },
