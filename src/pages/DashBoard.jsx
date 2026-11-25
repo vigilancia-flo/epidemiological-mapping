@@ -784,18 +784,16 @@ export default function Dashboard({ isPrivateView = false }) {
         />
       )}
       <div className="flex-1 flex flex-col h-full w-full overflow-y-auto overflow-x-hidden ml-0 md:ml-[var(--sidebar-width,16rem)] transition-all duration-300">
-        <header className="px-3 sm:px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-linear-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10 transition-all duration-300">
-          <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+        <header className="px-4 md:px-8 py-2 flex items-center justify-between sticky top-0 z-30 bg-gradient-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden shrink-0 group p-2 text-white bg-white/10 rounded-xl hover:bg-white/20 border border-transparent hover:border-white/10 transition-all duration-300 cursor-pointer"
-              aria-label="Abrir menu"
+              className="md:hidden p-2 text-white bg-white/10 rounded-lg hover:bg-white/20 active:scale-95 transition-all"
             >
-              <Menu className="size-5 sm:size-6 group-hover:scale-110 transition-transform duration-200" />
+              <Menu className="size-6" />
             </button>
-
-            <div className="flex items-center gap-2 min-w-0">
-              <LayoutDashboard className="size-5 md:size-6 text-white shrink-0" />
+            <div className="flex items-center gap-2 text-white">
+              <LayoutDashboard className="size-5 md:size-6" />
               <h2 className="text-sm sm:text-base md:text-xl font-bold tracking-wide text-white truncate">
                 {isUBSView ? "Painel da Unidade" : "Dados Gerais"}
               </h2>

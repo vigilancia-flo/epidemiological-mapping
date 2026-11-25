@@ -29,7 +29,7 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from "lucide-react";
-import Mascote from "../assets/Mascote.png";
+import Mascote from "../assets/LogoSupport.png";
 import Caricatura from "../assets/Caricatura.png";
 
 /* -------------------------------------------------------------------------- */
@@ -559,7 +559,7 @@ function Support({ isPrivateView = false }) {
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] overflow-hidden text-slate-800 antialiased">
       <Helmet>
-        <title>Central de Ajuda & Suporte | SIGEP</title>
+        <title>Central de Ajuda & Suporte</title>
       </Helmet>
 
       {isPrivateView ? (
@@ -576,31 +576,19 @@ function Support({ isPrivateView = false }) {
 
       <main className="flex-1 flex flex-col h-full w-full overflow-y-auto overflow-x-hidden ml-0 md:ml-[var(--sidebar-width,16rem)] transition-all duration-300">
         {/* TOPBAR MINIMALISTA */}
-        <header className="px-3 sm:px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-linear-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10 transition-all duration-300">
+        <header className="px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-gradient-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10">
           <div className="flex items-center gap-3">
             <button
-              type="button"
               onClick={() => setIsSidebarOpen(true)}
-              aria-label="Abrir menu lateral"
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 bg-slate-100 rounded-xl hover:bg-slate-200/70 active:scale-95 transition-all"
+              className="md:hidden p-2 text-white bg-white/10 rounded-lg hover:bg-white/20 active:scale-95 transition-all"
             >
-              <Menu className="size-5" aria-hidden="true" />
+              <Menu className="size-6" />
             </button>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white/10 text-[#054060] flex items-center justify-center">
-                <HelpCircle
-                  className="size-4 text-white  "
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <h2 className="text-sm md:text-base font-bold text-white tracking-tight leading-none">
-                  Central de Suporte
-                </h2>
-                <p className="text-[11px] text-slate-500 hidden sm:block mt-0.5 text-white">
-                  Documentação e atendimento inteligente SIGEP
-                </p>
-              </div>
+            <div className="flex items-center gap-2 text-white">
+              <HelpCircle className="size-5 md:size-6" />
+              <h2 className="text-base md:text-xl font-bold tracking-wide">
+                Administração do Sistema
+              </h2>
             </div>
           </div>
         </header>
