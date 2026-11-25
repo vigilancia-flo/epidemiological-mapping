@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar.jsx";
@@ -23,6 +23,9 @@ import {
   Navigation,
   Clock,
   Menu,
+  Search,
+  X,
+  ChevronRight,
 } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/button.jsx";
@@ -1954,6 +1957,79 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
   const navigate = useNavigate();
   const is3D = activeStyle === "openstreetmap3d";
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const searchContainerRef = useRef(null);
+
+  const normalizeStr = (str) =>
+    (str || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const filteredUbs = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = normalizeStr(searchQuery.trim());
+    return marcadores.filter(
+      (m) =>
+        normalizeStr(m.name).includes(q) || normalizeStr(m.label).includes(q),
+    );
+  }, [searchQuery]);
+
+  const handleSelectUbs = (place) => {
+    if (!place) return;
+    setSearchQuery(place.name);
+    setShowSearchResults(false);
+    setSelectedIndex(0);
+
+    const map = mapRef.current;
+    const target = { center: [place.lng, place.lat], zoom: 17, duration: 1500 };
+    if (map?.flyTo) map.flyTo(target);
+    else if (map?.easeTo) map.easeTo(target);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setShowSearchResults(false);
+      return;
+    }
+    if (e.key === "Enter") {
+      if (filteredUbs.length > 0) {
+        e.preventDefault();
+        handleSelectUbs(filteredUbs[selectedIndex] || filteredUbs[0]);
+      }
+      return;
+    }
+    if (!showSearchResults || filteredUbs.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, filteredUbs.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, 0));
+    }
+  };
+
+  // Reseta o índice ao digitar
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchQuery]);
+
+  // Fecha ao clicar fora
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target)
+      ) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
   useEffect(() => {
     if (mapRef.current) {
       mapRef.current.easeTo({ pitch: is3D ? 60 : 0, duration: 1000 });
@@ -2228,22 +2304,19 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
       )}
 
       <div className="flex-1 flex flex-col h-full w-full overflow-y-auto overflow-x-hidden ml-0 md:ml-[var(--sidebar-width,16rem)] transition-all duration-300">
-        <header className="px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-gradient-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10 transition-all duration-300">
+        <header className="px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-30 bg-gradient-to-br from-[#4180ab] to-[#054060] backdrop-blur-md shadow-sm border-b border-white/10">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-2 text-white bg-white/20 rounded-md hover:bg-white/30 transition-colors"
+              className="md:hidden p-2 text-white bg-white/10 rounded-lg hover:bg-white/20 active:scale-95 transition-all"
             >
               <Menu className="size-6" />
             </button>
-            <div>
-              <h1 className="text-lg md:text-2xl font-extrabold text-white flex items-center gap-2">
-                <MapIcon className="text-white-600 size-5 md:size-6" />
-                Mapa Epidemiológico Setorial
-              </h1>
-              <p className="text-xs md:text-sm text-white font-medium mt-0.5">
+            <div className="flex items-center gap-2 text-white">
+              <MapIcon className="size-5 md:size-6" />
+              <h2 className="text-base md:text-xl font-bold tracking-wide">
                 Densidade de Casos por UBS - Floriano, PI
-              </p>
+              </h2>
             </div>
           </div>
         </header>
@@ -2269,6 +2342,87 @@ export default function MapLeishmaniose({ isPrivateView = false }) {
               </div>
             ) : (
               <div className="relative w-full h-full">
+                <div
+                  ref={searchContainerRef}
+                  className="absolute top-20 left-4 w-[48%] md:top-7 md:left-1/2 md:-translate-x-1/2 md:w-96 z-50"
+                >
+                  <div className="relative">
+                    <div className="flex items-center gap-2 bg-white rounded-xl shadow-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-blue-400/40 transition">
+                      <Search className="size-4 text-slate-400 shrink-0" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setShowSearchResults(true);
+                        }}
+                        onFocus={() => setShowSearchResults(true)}
+                        onKeyDown={handleSearchKeyDown}
+                        placeholder="Buscar UBS..."
+                        className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 min-w-0"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            setShowSearchResults(false);
+                          }}
+                          className="p-1 rounded-full hover:bg-slate-100 transition-colors shrink-0"
+                          aria-label="Limpar busca"
+                        >
+                          <X className="size-3.5 text-slate-500" />
+                        </button>
+                      )}
+                    </div>
+
+                    {showSearchResults && searchQuery.trim() && (
+                      <div className="mt-1.5 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
+                        {filteredUbs.length > 0 ? (
+                          <ul className="py-1">
+                            {filteredUbs.map((place, idx) => (
+                              <li key={place.id}>
+                                <button
+                                  onMouseEnter={() => setSelectedIndex(idx)}
+                                  onClick={() => handleSelectUbs(place)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                                    idx === selectedIndex
+                                      ? "bg-blue-50"
+                                      : "hover:bg-slate-50"
+                                  }`}
+                                >
+                                  <div
+                                    className="size-7 rounded-full flex items-center justify-center shrink-0 border-2 border-white shadow-sm"
+                                    style={{ backgroundColor: place.color }}
+                                  >
+                                    <span className="text-white text-[10px] font-bold">
+                                      U
+                                    </span>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-slate-800 truncate">
+                                      {place.name}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 truncate">
+                                      {place.hours}
+                                    </p>
+                                  </div>
+                                  <ChevronRight className="size-4 text-slate-400 shrink-0" />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="px-4 py-6 text-center text-sm text-slate-500">
+                            Nenhuma UBS encontrada para{" "}
+                            <span className="font-semibold text-slate-700">
+                              "{searchQuery}"
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <Map
                   ref={mapRef}
                   center={[-43.0225, -6.7672]}

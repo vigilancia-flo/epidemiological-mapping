@@ -47,7 +47,7 @@ export default function ButtonTheme({
 
   return (
     <div
-      className={`absolute top-4 right-4 z-20 flex items-center gap-2 ${className || ""}`}
+      className={`absolute top-4 md:top-6 right-4 z-20 flex items-center gap-2 ${className || ""}`}
     >
       {/* Dropdown de Estilo de Mapa */}
       <div ref={dropdownRef} className="relative">
