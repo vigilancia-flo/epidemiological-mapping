@@ -42,22 +42,25 @@ const NAV_ITEMS = [
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+    // Verifica se o evento já foi capturado pelo main.jsx
+    if (window.deferredPrompt) {
+      setDeferredPrompt(window.deferredPrompt);
+    }
+
+    // Ouve o evento customizado disparado pelo main.jsx
+    const handleInstallReady = () => {
+      if (window.deferredPrompt) {
+        setDeferredPrompt(window.deferredPrompt);
+      }
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("pwaInstallReady", handleInstallReady);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
+      window.removeEventListener("pwaInstallReady", handleInstallReady);
     };
   }, []);
 
@@ -69,6 +72,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     if (outcome === "accepted") {
       setDeferredPrompt(null);
+      window.deferredPrompt = null;
     }
   };
 
@@ -126,7 +130,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             onClick={onClose}
           >
             <div className="relative shrink-0">
-              {/* Glow atrás do ícone */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#4180ab] to-[#054060] rounded-xl blur-md opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
               <div className="relative bg-gradient-to-br from-[#4180ab] to-[#054060] p-2.5 rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300">
                 <Activity className="size-5 text-white" strokeWidth={2.5} />
@@ -191,7 +194,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                         : "text-slate-500 hover:bg-slate-50 hover:text-[#054060]"
                     }`}
                   >
-                    {/* Barrinha lateral do item ativo */}
                     {active && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-gradient-to-b from-[#4180ab] to-[#054060] rounded-r-full" />
                     )}
@@ -227,7 +229,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                     </div>
                   </Link>
 
-                  {/* Tooltip no modo colapsado */}
                   {isCollapsed && (
                     <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap opacity-0 pointer-events-none group-hover/nav:opacity-100 group-hover/nav:translate-x-0 -translate-x-2 transition-all duration-200 z-50 hidden md:block">
                       {label}

@@ -56,22 +56,25 @@ const NAV_ITEMS = [
 const SidebarPrivate = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+    // Verifica se o evento já foi capturado pelo main.jsx
+    if (window.deferredPrompt) {
+      setDeferredPrompt(window.deferredPrompt);
+    }
+
+    // Ouve o evento customizado disparado pelo main.jsx
+    const handleInstallReady = () => {
+      if (window.deferredPrompt) {
+        setDeferredPrompt(window.deferredPrompt);
+      }
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("pwaInstallReady", handleInstallReady);
 
     return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleBeforeInstallPrompt,
-      );
+      window.removeEventListener("pwaInstallReady", handleInstallReady);
     };
   }, []);
 
@@ -83,6 +86,7 @@ const SidebarPrivate = ({ isOpen, onClose }) => {
 
     if (outcome === "accepted") {
       setDeferredPrompt(null);
+      window.deferredPrompt = null;
     }
   };
 
@@ -205,7 +209,6 @@ const SidebarPrivate = ({ isOpen, onClose }) => {
                         : "text-slate-500 hover:bg-slate-50 hover:text-[#054060]"
                     }`}
                   >
-                    {/* Barrinha lateral do item ativo */}
                     {active && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-linear-to-b from-[#538CB3] to-[#054060] rounded-r-full" />
                     )}
@@ -241,7 +244,6 @@ const SidebarPrivate = ({ isOpen, onClose }) => {
                     </div>
                   </Link>
 
-                  {/* Tooltip no modo colapsado */}
                   {isCollapsed && (
                     <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap opacity-0 pointer-events-none group-hover/nav:opacity-100 group-hover/nav:translate-x-0 -translate-x-2 transition-all duration-200 z-50 hidden md:block">
                       {label}
