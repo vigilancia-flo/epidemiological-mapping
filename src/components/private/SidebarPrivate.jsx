@@ -11,6 +11,7 @@ import {
   Syringe,
   ChevronsLeft,
   Megaphone,
+  Download,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -55,6 +56,35 @@ const NAV_ITEMS = [
 const SidebarPrivate = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+    }
+  };
 
   // Sincroniza a largura da sidebar com uma variável CSS global
   useEffect(() => {
@@ -223,6 +253,21 @@ const SidebarPrivate = ({ isOpen, onClose }) => {
             })}
           </ul>
         </nav>
+
+        {/* Botão de Instalação Mobile (PWA) */}
+        {deferredPrompt && (
+          <div className="px-3 pb-3 md:hidden">
+            <button
+              onClick={handleInstallClick}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#538CB3] to-[#054060] px-4 py-3 text-white shadow-md hover:shadow-lg transition-all duration-300 active:scale-95"
+            >
+              <Download className="size-5" />
+              <span className="text-sm font-bold tracking-wide">
+                Instalar Aplicativo
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Rodapé (Status do Sistema) */}
         <div className="p-3 border-t border-slate-100">
