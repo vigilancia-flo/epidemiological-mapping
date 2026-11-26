@@ -1,3 +1,4 @@
+// vite.config.js
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -13,7 +14,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["Logov1.png"],
+      includeAssets: ["Logov1.png"], // Seu logo principal
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
@@ -26,12 +27,12 @@ export default defineConfig({
         display: "standalone",
         icons: [
           {
-            src: "Logov1.png",
+            src: "pwa-192x192.png", // Ícone PNG de 192x192
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "Logov1.png",
+            src: "pwa-512x512.png", // Ícone PNG de 512x512
             sizes: "512x512",
             type: "image/png",
           },

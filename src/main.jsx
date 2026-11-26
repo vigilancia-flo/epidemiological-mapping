@@ -1,5 +1,16 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+window.deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  window.deferredPrompt = e;
+  // Avisa os componentes React que o PWA está pronto para ser instalado
+  window.dispatchEvent(new Event("pwaInstallReady"));
+});
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
 import "./index.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import App from "./pages/App.jsx";
