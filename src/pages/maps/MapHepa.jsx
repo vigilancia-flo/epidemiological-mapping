@@ -2324,7 +2324,7 @@ export default function MapHepa({ isPrivateView = false }) {
               <div className="relative w-full h-full">
                 <div
                   ref={searchContainerRef}
-                  className="absolute top-20 left-4 w-[48%] md:top-7 md:left-1/2 md:-translate-x-1/2 md:w-96 z-20"
+                  className="absolute top-20 left-4 w-[44%] md:top-7 md:left-1/2 md:-translate-x-1/2 md:w-80 z-20"
                 >
                   <div className="relative">
                     <div className="flex items-center gap-2 bg-white rounded-xl shadow-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-blue-400/40 transition">

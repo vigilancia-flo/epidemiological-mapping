@@ -194,7 +194,8 @@ export default function CommunicationChannel({ isPrivateView = false }) {
   const [brokenImages, setBrokenImages] = useState({});
 
   const fileInputRef = useRef(null);
-  const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const rawBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const baseUrl = rawBaseUrl.replace(/\/$/, "");
 
   const TITLE_MAX = 120;
   const CONTENT_MAX = 2000;
@@ -324,7 +325,14 @@ export default function CommunicationChannel({ isPrivateView = false }) {
         setToast({ type: "success", message: "Aviso publicado com sucesso!" });
         fetchPosts();
       } else {
-        throw new Error("Erro no servidor");
+        const errorData = await response.json().catch(() => ({}));
+        console.error(
+          "Erro detalhado do backend:",
+          errorData,
+          "Status HTTP:",
+          response.status,
+        );
+        throw new Error(`Erro no servidor (Status: ${response.status})`);
       }
     } catch (error) {
       console.error("Erro ao criar aviso:", error);

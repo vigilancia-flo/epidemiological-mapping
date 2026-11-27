@@ -78,7 +78,7 @@ export default function EvolucaoMensal({ pacientes = [], escopo = "unidade" }) {
             </p>
           </div>
         ) : (
-          <div aria-hidden="true">
+          <div aria-hidden="true" className="w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={dados}

@@ -799,8 +799,21 @@ export default function Dashboard({ isPrivateView = false }) {
               </h2>
             </div>
           </div>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Botão de Instalação Mobile (PWA) */}
+            {deferredPrompt && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                aria-label="Instalar aplicativo"
+                title="Instalar aplicativo"
+                className="md:hidden inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl bg-gradient-to-r from-[#4180ab] to-[#054060] text-white text-xs font-semibold tracking-wide shadow-sm border border-[#4180ab]/30 dark:border-sky-400/20 hover:brightness-110 active:scale-95 transition-all duration-200 whitespace-nowrap shrink-0 hover:cursor-pointer"
+              >
+                <Download className="size-4 shrink-0" />
+                <span>Instalar</span>
+              </button>
+            )}
 
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <UserProfileMenu className="hover:cursor-pointer" />
           </div>
         </header>
