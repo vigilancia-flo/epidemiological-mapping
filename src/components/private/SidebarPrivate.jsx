@@ -11,7 +11,6 @@ import {
   Syringe,
   ChevronsLeft,
   Megaphone,
-  Download,
 } from "lucide-react";
 
 const NAV_ITEMS = [
