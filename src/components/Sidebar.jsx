@@ -64,18 +64,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      setDeferredPrompt(null);
-      window.deferredPrompt = null;
-    }
-  };
-
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--sidebar-width",

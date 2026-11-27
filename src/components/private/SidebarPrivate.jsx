@@ -78,18 +78,6 @@ const SidebarPrivate = ({ isOpen, onClose }) => {
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      setDeferredPrompt(null);
-      window.deferredPrompt = null;
-    }
-  };
-
   // Sincroniza a largura da sidebar com uma variável CSS global
   useEffect(() => {
     document.documentElement.style.setProperty(

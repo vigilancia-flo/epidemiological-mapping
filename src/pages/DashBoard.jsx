@@ -728,6 +728,18 @@ export default function Dashboard({ isPrivateView = false }) {
   const trendAlerta = calcularVariacao(casosAlerta, casosAlertaAnterior);
   const trendNovos = calcularVariacao(taxaNovosCasos, taxaNovosCasosAnterior);
 
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+      window.deferredPrompt = null;
+    }
+  };
+
   const kpis = [
     {
       title: "Total de Notificações",
